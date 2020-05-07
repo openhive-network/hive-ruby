@@ -1,7 +1,7 @@
 require 'bundler/gem_tasks'
 require 'rake/testtask'
 require 'yard'
-require 'steem'
+require 'hive'
 
 Rake::TestTask.new(test: ['clean:vcr', 'test:threads']) do |t|
   t.libs << 'test'
@@ -25,15 +25,15 @@ namespace :test do
     t.libs << 'test'
     t.libs << 'lib'
     t.test_files = [
-      'test/steem/account_by_key_api_test.rb',
-      'test/steem/account_history_api_test.rb',
-      'test/steem/block_api_test.rb',
-      'test/steem/database_api_test.rb',
-      'test/steem/follow_api_test.rb',
-      'test/steem/jsonrpc_test.rb',
-      'test/steem/market_history_api_test.rb',
-      'test/steem/tags_api_test.rb',
-      'test/steem/witness_api_test.rb'
+      'test/hive/account_by_key_api_test.rb',
+      'test/hive/account_history_api_test.rb',
+      'test/hive/block_api_test.rb',
+      'test/hive/database_api_test.rb',
+      'test/hive/follow_api_test.rb',
+      'test/hive/jsonrpc_test.rb',
+      'test/hive/market_history_api_test.rb',
+      'test/hive/tags_api_test.rb',
+      'test/hive/witness_api_test.rb'
     ]
     t.ruby_opts << if ENV['HELL_ENABLED']
       '-W2'
@@ -50,8 +50,8 @@ namespace :test do
     t.libs << 'test'
     t.libs << 'lib'
     t.test_files = [
-      'test/steem/broadcast_test.rb',
-      'test/steem/transaction_builder_test.rb'
+      'test/hive/broadcast_test.rb',
+      'test/hive/transaction_builder_test.rb'
     ]
     t.ruby_opts << if ENV['HELL_ENABLED']
       '-W2'
@@ -68,7 +68,7 @@ namespace :test do
     t.libs << 'test'
     t.libs << 'lib'
     t.test_files = [
-      'test/steem/testnet_test.rb'
+      'test/hive/testnet_test.rb'
     ]
     t.ruby_opts << if ENV['HELL_ENABLED']
       '-W2'
@@ -82,20 +82,30 @@ namespace :test do
     next if !!ENV['TEST']
     
     threads = []
-    api = Steem::Api.new(url: ENV['TEST_NODE'])
-    database_api = Steem::DatabaseApi.new(url: ENV['TEST_NODE'])
+    api = Hive::Api.new(url: ENV['TEST_NODE'])
+    database_api = Hive::DatabaseApi.new(url: ENV['TEST_NODE'])
     witnesses = {}
     keys = %i(created url total_missed props running_version
       hardfork_version_vote hardfork_time_vote)
+    low_participation_warning_seen = false
     
     if defined? Thread.report_on_exception
       Thread.report_on_exception = true
     end
     
     database_api.get_active_witnesses do |result|
+      abort 'Bad result from: database_api.get_active_witnesses' if result.nil?
+      
       print "Found #{result.witnesses.size} witnesses ..."
       
       result.witnesses.each do |witness_name|
+        if witness_name == '' && !low_participation_warning_seen
+          warn "\nWarning: low witness participation detected."
+          low_participation_warning_seen = true
+          
+          next
+        end
+        
         threads << Thread.new do
           api.get_witness_by_account(witness_name) do |witness|
             witnesses[witness.owner] = witness.map do |k, v|
@@ -141,8 +151,8 @@ namespace :stream do
   task :block_range, [:mode, :at_block_num] do |t, args|
     mode = (args[:mode] || 'irreversible').to_sym
     first_block_num = args[:at_block_num].to_i if !!args[:at_block_num]
-    stream = Steem::Stream.new(url: ENV['TEST_NODE'], mode: mode)
-    api = Steem::Api.new(url: ENV['TEST_NODE'])
+    stream = Hive::Stream.new(url: ENV['TEST_NODE'], mode: mode)
+    api = Hive::Api.new(url: ENV['TEST_NODE'])
     last_block_num = nil
     last_timestamp = nil
     range_complete = false
@@ -189,8 +199,8 @@ namespace :stream do
   task :trx_range, [:mode, :at_block_num] do |t, args|
     mode = (args[:mode] || 'irreversible').to_sym
     first_block_num = args[:at_block_num].to_i if !!args[:at_block_num]
-    stream = Steem::Stream.new(url: ENV['TEST_NODE'], mode: mode)
-    api = Steem::Api.new(url: ENV['TEST_NODE'])
+    stream = Hive::Stream.new(url: ENV['TEST_NODE'], mode: mode)
+    api = Hive::Api.new(url: ENV['TEST_NODE'])
     
     api.get_dynamic_global_properties do |properties|
       current_block_num = if mode == :head
@@ -212,8 +222,8 @@ namespace :stream do
   task :op_range, [:mode, :at_block_num] do |t, args|
     mode = (args[:mode] || 'irreversible').to_sym
     first_block_num = args[:at_block_num].to_i if !!args[:at_block_num]
-    stream = Steem::Stream.new(url: ENV['TEST_NODE'], mode: mode)
-    api = Steem::Api.new(url: ENV['TEST_NODE'])
+    stream = Hive::Stream.new(url: ENV['TEST_NODE'], mode: mode)
+    api = Hive::Api.new(url: ENV['TEST_NODE'])
     
     api.get_dynamic_global_properties do |properties|
       current_block_num = if mode == :head
@@ -235,8 +245,8 @@ namespace :stream do
   task :vop_range, [:mode, :at_block_num] do |t, args|
     mode = (args[:mode] || 'irreversible').to_sym
     first_block_num = args[:at_block_num].to_i if !!args[:at_block_num]
-    stream = Steem::Stream.new(url: ENV['TEST_NODE'], mode: mode)
-    api = Steem::Api.new(url: ENV['TEST_NODE'])
+    stream = Hive::Stream.new(url: ENV['TEST_NODE'], mode: mode)
+    api = Hive::Api.new(url: ENV['TEST_NODE'])
     
     api.get_dynamic_global_properties do |properties|
       current_block_num = if mode == :head
@@ -258,8 +268,8 @@ namespace :stream do
   task :all_op_range, [:mode, :at_block_num] do |t, args|
     mode = (args[:mode] || 'irreversible').to_sym
     first_block_num = args[:at_block_num].to_i if !!args[:at_block_num]
-    stream = Steem::Stream.new(url: ENV['TEST_NODE'], mode: mode)
-    api = Steem::Api.new(url: ENV['TEST_NODE'])
+    stream = Hive::Stream.new(url: ENV['TEST_NODE'], mode: mode)
+    api = Hive::Api.new(url: ENV['TEST_NODE'])
     
     api.get_dynamic_global_properties do |properties|
       current_block_num = if mode == :head
@@ -284,9 +294,9 @@ end
 
 task default: :test
 
-desc 'Ruby console with steem already required.'
+desc 'Ruby console with hive already required.'
 task :console do
-  exec 'irb -r steem -I ./lib'
+  exec 'irb -r hive -I ./lib'
 end
 
 namespace :clean do
@@ -301,7 +311,7 @@ namespace :show do
   desc 'Shows known API names.'
   task :apis do
     url = ENV['URL']
-    jsonrpc = Steem::Jsonrpc.new(url: url)
+    jsonrpc = Hive::Jsonrpc.new(url: url)
     api_methods = jsonrpc.get_api_methods
     puts api_methods.keys
   end
@@ -309,23 +319,39 @@ namespace :show do
   desc 'Shows known method names for specified API.'
   task :methods, [:api] do |t, args|
     url = ENV['URL']
-    jsonrpc = Steem::Jsonrpc.new(url: url)
+    jsonrpc = Hive::Jsonrpc.new(url: url)
     api_methods = jsonrpc.get_api_methods
-    api_methods[args[:api]].each do |method|
-      jsonrpc.get_signature(method: "#{args[:api]}.#{method}") do |signature|
-        print "#{method} "
-        params = signature.args.map do |k, v|
-          if v =~ /\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2]\d|3[0-1])T(2[0-3]|[01]\d):[0-5]\d:[0-5]\d/
-            "#{k}: Time"
-          elsif v.class == Hashie::Array
-            "#{k}: []"
-          elsif v.class == Hashie::Mash
-            "#{k}: {}"
-          else
-            "#{k}: #{v.class}"
+    
+    api_names = if !!args[:api]
+      [args[:api]]
+    else
+      Hive::Fallback::API_METHODS.keys
+    end
+    
+    api_names.each do |api_name|
+      unless !!api_methods[api_name.to_s]
+        puts "Skipped API: #{api_name}"
+        
+        next
+      end
+      
+      api_methods[api_name.to_s].each do |method|
+        jsonrpc.get_signature(method: "#{api_name}.#{method}") do |signature|
+          print "#{api_name}.#{method} "
+          
+          params = signature.args.map do |k, v|
+            if v =~ /\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2]\d|3[0-1])T(2[0-3]|[01]\d):[0-5]\d:[0-5]\d/
+              "#{k}: Time"
+            elsif v.class == Hashie::Array
+              "#{k}: []"
+            elsif v.class == Hashie::Mash
+              "#{k}: {}"
+            else
+              "#{k}: #{v.class}"
+            end
           end
+          puts params.join(', ')
         end
-        puts params.join(', ')
       end
     end
   end

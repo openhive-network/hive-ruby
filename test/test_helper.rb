@@ -5,7 +5,7 @@ require 'simplecov'
 SimpleCov.start
 SimpleCov.merge_timeout 3600
 
-require 'steem'
+require 'hive'
 require 'minitest/autorun'
 require 'minitest/line/describe_track'
 require 'webmock/minitest'
@@ -28,14 +28,14 @@ end
 
 # before tests, outside test threads
 VCR.insert_cassette('global_cassette', record: :once, match_requests_on: [:method, :uri, :body])
-@jsonrpc = Steem::Jsonrpc.new
+@jsonrpc = Hive::Jsonrpc.new
 @jsonrpc.get_api_methods # caches up methods
 
-class Steem::Test < MiniTest::Test
+class Hive::Test < MiniTest::Test
   defined? prove_it! and prove_it!
   
-  TEST_NODE = ENV.fetch 'TEST_NODE', Steem::ChainConfig::NETWORKS_STEEM_DEFAULT_NODE
-  # TEST_NODE = Steem::ChainConfig::NETWORKS_TEST_DEFAULT_NODE
+  TEST_NODE = ENV.fetch 'TEST_NODE', Hive::ChainConfig::NETWORKS_HIVE_DEFAULT_NODE
+  # TEST_NODE = Hive::ChainConfig::NETWORKS_TEST_DEFAULT_NODE
   
   # Most likely modes: 'once' and 'new_episodes'
   VCR_RECORD_MODE = (ENV['VCR_RECORD_MODE'] || 'new_episodes').to_sym
@@ -46,8 +46,8 @@ class Steem::Test < MiniTest::Test
     VCR.use_cassette(name, options) do
       begin
         yield
-      rescue Steem::BaseError => e
-        skip "Probably just a node acting up: #{e}"
+      rescue Hive::BaseError => e
+        skip "Probably just a node acting up: #{e}\n#{e.backtrace.join("\n")}"
       rescue Psych::SyntaxError => e
         skip 'This happens when we try to get fancy and disable thread-safety.'
       end
