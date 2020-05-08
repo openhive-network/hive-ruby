@@ -1,0 +1,17 @@
+image: ruby:2.6.1-alpine
+
+pages:
+  script:
+  - apk add --update --no-cache build-base libxml2-dev libxslt-dev libstdc++ tzdata mariadb-dev nodejs ca-certificates yarn
+  - bundle install --path vendor
+  - bundle exec yard
+  - rm -rf public
+  - mv doc public
+  artifacts:
+    paths:
+    - public
+  cache:
+    paths:
+      - vendor
+  only:
+  - master
