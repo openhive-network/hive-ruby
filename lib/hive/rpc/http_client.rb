@@ -17,7 +17,8 @@ module Hive
       # 
       # @private
       TIMEOUT_ERRORS = [Net::OpenTimeout, JSON::ParserError, Net::ReadTimeout,
-        Errno::EBADF, IOError, Errno::ENETDOWN, Hive::RemoteDatabaseLockError]
+        Errno::EBADF, IOError, Errno::ENETDOWN, Hive::RemoteDatabaseLockError,
+        Hive::RequestTimeoutUpstreamResponseError, Hive::RemoteNodeError]
       
       # @private
       POST_HEADERS = {
@@ -57,8 +58,10 @@ module Hive
       def rpc_execute(api_name = @api_name, api_method = nil, options = {}, &block)
         reset_timeout
         
-        catch :tota_cera_pila do; begin
-          request = http_post
+        response = nil
+        
+        loop do
+          request = http_post(api_name)
           
           request_object = if !!api_name && !!api_method
             put(api_name, api_method, options)
@@ -80,11 +83,11 @@ module Hive
           
           response = catch :http_request do; begin; http_request(request)
           rescue *TIMEOUT_ERRORS => e
-            throw retry_timeout(:http_request, e)
+            retry_timeout(:http_request, e) and redo
           end; end
           
           if response.nil?
-            throw retry_timeout(:tota_cera_pila, 'response was nil')
+            retry_timeout(:tota_cera_pila, 'response was nil') and redo
           end
           
           case response.code
@@ -108,6 +111,9 @@ module Hive
             else; response
             end
             
+            timeout_detected = false
+            timeout_cause = nil
+            
             [response].flatten.each_with_index do |r, i|
               if defined?(r.error) && !!r.error
                 if !!r.error.message
@@ -116,7 +122,10 @@ module Hive
                     rpc_args = [request_object].flatten[i]
                     raise_error_response rpc_method_name, rpc_args, r
                   rescue *TIMEOUT_ERRORS => e
-                    throw retry_timeout(:tota_cera_pila, e)
+                    timeout_detected = true
+                    timeout_cause = nil
+                    
+                    break # fail fast
                   end
                 else
                   raise Hive::ArgumentError, r.error.inspect
@@ -124,19 +133,29 @@ module Hive
               end
             end
             
+            if timeout_detected
+              retry_timeout(:tota_cera_pila, timeout_cause) and redo
+            end
+            
             yield_response response, &block
           when '504' # Gateway Timeout
-            throw retry_timeout(:tota_cera_pila, response.body)
+            retry_timeout(:tota_cera_pila, response.body) and redo
           when '502' # Bad Gateway
-            throw retry_timeout(:tota_cera_pila, response.body)
+            retry_timeout(:tota_cera_pila, response.body) and redo
           else
             raise UnknownError, "#{api_name}.#{api_method}: #{response.body}"
           end
-        end; end
+          
+          break # success!
+        end
+        
+        response
       end
       
       def rpc_batch_execute(options = {}, &block)
-        yield_response rpc_execute(nil, nil, options), &block
+        api_name = options[:api_name]
+        
+        yield_response rpc_execute(api_name, nil, options), &block
       end
     end
   end

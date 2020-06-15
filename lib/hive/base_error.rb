@@ -74,6 +74,10 @@ module Hive
         raise Hive::ArgumentError, "#{context}: #{error.message}", build_backtrace(error)
       end
       
+      if error.message.include? 'Invalid parameter'
+        raise Hive::ArgumentError, "#{context}: #{error.message}", build_backtrace(error)
+      end
+      
       if error.message.include? 'blk->transactions.size() > itr->trx_in_block'
         raise Hive::VirtualOperationsNotAllowedError, "#{context}: #{error.message}", build_backtrace(error)
       end
@@ -120,6 +124,10 @@ module Hive
       
       if error.message.include? 'Upstream response error'
         raise Hive::UpstreamResponseError, "#{context}: #{error.message}", build_backtrace(error)
+      end
+      
+      if error.message.include? 'Request Timeout'
+        raise Hive::RequestTimeoutUpstreamResponseError, "#{context}: #{error.message}", build_backtrace(error)
       end
       
       if error.message.include? 'Bad or missing upstream response'
@@ -205,6 +213,7 @@ module Hive
   class UpstreamResponseError < RemoteNodeError; end
   class RemoteDatabaseLockError < UpstreamResponseError; end
   class PluginNotEnabledError < UpstreamResponseError; end
+  class RequestTimeoutUpstreamResponseError < UpstreamResponseError; end
   class BadOrMissingUpstreamResponseError < UpstreamResponseError; end
   class TransactionIndexDisabledError < BaseError; end
   class NotAppBaseError < BaseError; end

@@ -208,11 +208,25 @@ module Hive::Fallback
       :get_account_reputations
     ],
     bridge: [
-      :account_notifications,
-      :get_community,
+      :normalize_post,
+      :get_post_header,
+      :get_discussion,
+      :get_post,
+      :get_account_posts,
       :get_ranked_posts,
+      :get_profile,
+      :get_trending_topics,
+      :post_notifications,
+      :account_notifications,
+      :unread_notifications,
+      :get_payout_stats,
+      :get_community,
+      :get_community_context,
+      :list_pop_communities,
+      :list_subscribers,
       :list_all_subscriptions,
       :list_community_roles,
+      :list_communities
     ]
   }
   
@@ -277,11 +291,25 @@ module Hive::Fallback
       get_account_reputations: {account_lower_bound: String, limit: Integer}
     },
     bridge: {
-      account_notifications: {account: String, limit: Integer},
+      normalize_post: {post: Hash},
+      get_post_header: {author: String, permlink: String},
+      get_discussion: {author: String, permlink: String},
+      get_post: {author: String, permlink: String, observer: String},
+      get_account_posts: {sort: String, account: String, start_account: String, start_permlink: String, limit: Integer, observer: String},
+      get_ranked_posts: {sort: String, tag: String, observer: String, limit: Integer, start_author: String, start_permlink: String},
+      get_profile: {account: String, observer: String},
+      get_trending_topics: {limit: Integer, observer: String},
+      post_notifications: {author: String, permlink: String, min_score: Integer, last_id: String, limit: Integer},
+      account_notifications: {account: String, min_score: Integer, last_id: Integer, limit: Integer},
+      unread_notifications: {account: String, min_score: Integer},
+      get_payout_stats: {limit: Integer},
       get_community: {name: String, observer: String},
-      get_ranked_posts: {sort: String, tag: String, observer: String, limit: Integer},
-      list_all_subscriptions: {account: String},
-      list_community_roles: {community: String}
+      get_community_context: {name: String, account: String},
+      list_communities: {last: String, limit: Integer, query: String, sort: String, observer: String},
+      list_pop_communities: {limit: Integer},
+      list_community_roles: {community: String, last: String, limit: Integer},
+      list_subscribers: {community: String},
+      list_all_subscriptions: {account: String}
     }
   }
 end
