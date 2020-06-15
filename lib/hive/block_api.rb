@@ -52,7 +52,7 @@ module Hive
         
         if !!block
           index = 0
-          @rpc_client.rpc_batch_execute(request_object: request_object) do |result, error, id|
+          @rpc_client.rpc_batch_execute(api_name: self.class.api_name, request_object: request_object) do |result, error, id|
             block_num = sub_range.to_a[index]
             index = index + 1
             
@@ -66,7 +66,7 @@ module Hive
         else
           blocks = []
           
-          @rpc_client.rpc_batch_execute(request_object: request_object) do |result, error, id|
+          @rpc_client.rpc_batch_execute(api_name: self.class.api_name, request_object: request_object) do |result, error, id|
             blocks << result
           end
         end

@@ -90,7 +90,7 @@ module Hive
       end
       
       for request_object in chunks do
-        @rpc_client.rpc_batch_execute(request_object: request_object) do |result, error, id|
+        @rpc_client.rpc_batch_execute(api_name: self.class.api_name, request_object: request_object) do |result, error, id|
           api, method = method_map[id]
           api = api.to_sym
           method = method.to_sym

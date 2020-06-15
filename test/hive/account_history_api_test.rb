@@ -63,7 +63,7 @@ module Hive
         }
         
         @api.get_transaction(options) do |result|
-          assert_equal Hashie::Array, result.history.class
+          assert_equal Hashie::Mash, result.class
         end
       end
     end

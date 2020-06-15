@@ -299,7 +299,9 @@ module Hive
         assert_raises SocketError, Errno::ECONNREFUSED do
           jsonrpc = Jsonrpc.new(url: 'https://bad.node')
           jsonrpc.get_methods
+          # :nocov:
           fail 'regression detected, SocketError or Errno::ECONNREFUSED expected'
+          # :nocov:
         end
       end
     end

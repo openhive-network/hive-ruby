@@ -138,6 +138,7 @@ module Hive
     end
     
     def test_operations_by_deprecated_type
+      votes_found = false
       options = {
         until_block_num: @last_irreversible_block_num + 1,
         types: :vote
@@ -148,7 +149,11 @@ module Hive
           assert op
           assert trx_id
           assert block_num
+          
+          votes_found = true
         end
+        
+        fail 'no vote ops found' unless votes_found
       end
     end
     
