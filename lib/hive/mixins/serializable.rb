@@ -6,7 +6,7 @@ module Hive
     KNOWN_TYPES = NUMERIC_TYPES + %i(boolean string raw_bytes point_in_time
       public_key amount price authority optional_authority
       comment_options_extensions beneficiaries chain_properties required_auths
-      witness_properties empty_array lambda)
+      witness_properties uint64_array empty_array lambda)
     
     module ClassMethods
       def def_attr key_pair

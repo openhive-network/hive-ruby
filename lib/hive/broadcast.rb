@@ -713,31 +713,29 @@ module Hive
       params = options[:params]
       check_required_fields(params, *required_fields)
       
-      if !!(account_creation_fee = params[:props][:account_creation_fee] rescue nil)
-        params[:props][:account_creation_fee] = normalize_amount(options.merge amount: account_creation_fee, serialize: true)
+      props = params[:props]
+      
+      if !!(account_creation_fee = props[:account_creation_fee] rescue nil)
+        props[:account_creation_fee] = hexlify normalize_amount(options.merge amount: account_creation_fee, serialize: true)
       end
       
-      if !!(sbd_exchange_rate = params[:props][:sbd_exchange_rate] rescue nil)
-        params[:props][:sbd_exchange_rate][:base] = normalize_amount(options.merge amount: sbd_exchange_rate[:base], serialize: true)
-        params[:props][:sbd_exchange_rate][:quote] = normalize_amount(options.merge amount: sbd_exchange_rate[:quote], serialize: true)
-        params[:props][:sbd_exchange_rate] = params[:props][:sbd_exchange_rate].to_json
+      if !!(sbd_exchange_rate = props[:sbd_exchange_rate] rescue nil)
+        props[:sbd_exchange_rate][:base] = normalize_amount(options.merge amount: sbd_exchange_rate[:base], serialize: true)
+        props[:sbd_exchange_rate][:quote] = normalize_amount(options.merge amount: sbd_exchange_rate[:quote], serialize: true)
+        props[:sbd_exchange_rate] = hexlify props[:sbd_exchange_rate].to_json
       end
       
       %i(key new_signing_key).each do |key|
-        if !!params[key] && params[key].size == 53
-          params[key] = params[key][3..-1]
+        if !!props[key] && props[key].length == 53
+          props[key] = hexlify props[key][3..-1]
         end
       end
       
-      %i(account_creation_fee sbd_exchange_rate url new_signing_key).each do |key|
-        next unless !!params[:props][key]
-        
-        val = params[:props][key].to_s
-          
-        params[:props][key] = hexlify val unless val =~ /^[0-9A-F]+$/i
+      if !!(val = props[:url])
+        props[:url] = hexlify val unless val =~ /^[0-9A-F]+$/i
       end
       
-      params[:props] = params[:props].to_a
+      params[:props] = props.sort_by{|k,v| k}
       
       params[:extensions] ||= []
       ops = [[:witness_set_properties, params]]

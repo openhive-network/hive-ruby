@@ -46,6 +46,8 @@ module Hive
         [dgpo.current_supply.split(' ').last, dgpo.current_sbd_supply.split(' ').last, dgpo.total_vesting_shares.split(' ').last]
       end
       
+      @force_serialize = true
+      
       fail 'Are you nuts?' if OPS.include? :decline_voting_rights
     end
     
@@ -292,7 +294,7 @@ module Hive
             {'bob': 1000}
           ]
         },
-        force_serialize: true # FIXME
+        force_serialize: @force_serialize
       }
       
       vcr_cassette('broadcast_comment_with_options') do
@@ -666,19 +668,56 @@ module Hive
           props: {
             account_creation_fee: "0.000 #{@core_symbol}",
             maximum_block_size: 131072,
-            sbd_interest_rate: 1000,
-            account_subsidy_budget: 50000,
+            # sbd_interest_rate: 1000,
+            # account_subsidy_budget: 50000,
             account_subsidy_decay: 330782,
             sbd_exchange_rate: {base: '1.000 HBD', quote: '1.000 HIVE'},
             url: 'https://steemit.com',
             new_signing_key: 'STM8LoQjQqJHvotqBo7HjnqmUbFW9oJ2theyqonzUd9DdJ7YYHsvD'
           }
         },
-        force_serialize: true # FIXME
+        force_serialize: @force_serialize
       }
     
       vcr_cassette('broadcast_witness_set_properties') do
         assert_raises MissingOtherAuthorityError do
+          Broadcast.witness_set_properties(@broadcast_options.merge(options))
+        end
+      end
+    end
+    
+    def test_witness_set_properties_string_props
+      options = {
+        params: {
+          owner: @account_name,
+          props: {
+            account_creation_fee: "0.000 #{@core_symbol}",
+            sbd_exchange_rate: {base: '1.000 HBD', quote: '1.000 HIVE'},
+            url: 'https://steemit.com',
+            new_signing_key: 'STM8LoQjQqJHvotqBo7HjnqmUbFW9oJ2theyqonzUd9DdJ7YYHsvD'
+          }
+        },
+        force_serialize: @force_serialize
+      }
+    
+      vcr_cassette('broadcast_witness_set_properties_string_props') do
+        assert_raises MissingOtherAuthorityError do
+          Broadcast.witness_set_properties(@broadcast_options.merge(options))
+        end
+      end
+    end
+    
+    def test_witness_set_properties_props_nil
+      options = {
+        params: {
+          owner: @account_name,
+          props: nil,
+        },
+        force_serialize: @force_serialize
+      }
+    
+      vcr_cassette('broadcast_witness_set_properties_props_nil') do
+        assert_raises Hive::ArgumentError do
           Broadcast.witness_set_properties(@broadcast_options.merge(options))
         end
       end

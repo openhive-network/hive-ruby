@@ -159,17 +159,16 @@ module Hive
         key = string.to_sym
         properties[key] = case key
         when :account_creation_fee then Hive::Type::Amount.new(string)
-        when :account_subsidy_budget then scan(3)
-        when :account_subsidy_decay, :maximum_block_size then uint32
-        when :url then string
+        # when :account_subsidy_budget then int32
+        # when :account_subsidy_decay, :maximum_block_size then uint32
         when :sbd_exchange_rate
           JSON[string].tap do |rate|
             rate["base"] = Hive::Type::Amount.new(rate["base"])
             rate["quote"] = Hive::Type::Amount.new(rate["quote"])
           end
-        when :sbd_interest_rate then uint16
-        when :key, :new_signing_key then @prefix + scan(50)
-        else; raise "Unknown witness property: #{key}"
+        # when :sbd_interest_rate then uint16
+        when :url, :key, :new_signing_key then string
+        else; warn "Unsupported witness property: #{key}"
         end
       end
       
@@ -178,6 +177,10 @@ module Hive
     
     def empty_array
       unsigned_char == 0 and [] or raise "Found non-empty array."
+    end
+    
+    def uint64_array
+      varint.times{ uint64 }
     end
     
     def transaction(options = {})
