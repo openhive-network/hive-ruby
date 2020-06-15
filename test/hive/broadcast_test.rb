@@ -9,7 +9,8 @@ module Hive
       feed_publish limit_order_cancel limit_order_create recover_account
       request_account_recovery set_withdraw_vesting_route transfer
       transfer_to_vesting vote withdraw_vesting witness_update
-      witness_set_properties create_claimed_account claim_account)
+      witness_set_properties create_claimed_account claim_account
+      claim_reward_balance)
     
     def setup
       app_base = false # todo: randomly set true or false to test differences.
@@ -648,7 +649,7 @@ module Hive
           props: {
             account_creation_fee: "0.000 #{@core_symbol}",
             maximum_block_size: 131072,
-            sbd_interest_rate:1000
+            sbd_interest_rate: 1000
           },
           fee: "0.000 #{@core_symbol}"
         }
@@ -761,7 +762,7 @@ module Hive
           id: 777,
           data: '0a627974656d617374657207737465656d697402a3d13897d82114466ad87a74b73a53292d8331d1bd1d3082da6bfbcff19ed097029db013797711c88cccca3692407f9ff9b9ce7221aaa2d797f1692be2215d0a5f6d2a8cab6832050078bc5729201e3ea24ea9f7873e6dbdc65a6bd9899053b9acda876dc69f11a13df9ca8b26b6'
         },
-        force_serialize: true # FIXME
+        force_serialize: @force_serialize
       }
     
       vcr_cassette('broadcast_custom') do
@@ -777,7 +778,7 @@ module Hive
           id: 777,
           data: '0a627974656d617374657207737465656d697402a3d13897d82114466ad87a74b73a53292d8331d1bd1d3082da6bfbcff19ed097029db013797711c88cccca3692407f9ff9b9ce7221aaa2d797f1692be2215d0a5f6d2a8cab6832050078bc5729201e3ea24ea9f7873e6dbdc65a6bd9899053b9acda876dc69f11a13df9ca8b26b6'
         },
-        force_serialize: true # FIXME
+        force_serialize: @force_serialize
       }
     
       vcr_cassette('broadcast_custom_binary') do
@@ -1141,6 +1142,127 @@ module Hive
       vcr_cassette('broadcast_claim_account') do
         assert_raises MissingActiveAuthorityError do
           Broadcast.claim_account(@broadcast_options.merge(options))
+        end
+      end
+    end
+    
+    def test_fake_op
+      options = {
+        ops: [[:bogus, {}]]
+      }
+      
+      vcr_cassette('broadcast_fake_op') do
+        assert_raises UnknownOperationError do
+          Hive::Broadcast.process(@broadcast_options.merge(options))
+        end
+      end
+    end
+    
+    def test_claim_reward_balance
+      options = {
+        params: {
+          account: @account_name,
+          reward_steem: "0.000 #{@core_symbol}",
+          reward_sbd: "0.000 #{@debt_symbol}",
+          reward_vests: "0.000000 #{@vest_symbol}"
+        }
+      }
+    
+      vcr_cassette('broadcast_claim_reward_balance') do
+        assert Broadcast.claim_reward_balance(@broadcast_options.merge(options))
+      end
+    end
+    
+    def test_account_update2
+      options = {
+        params: {
+          account: @account_name,
+          json_metadata: '{}'
+        }
+      }
+      
+      vcr_cassette('broadcast_account_update2') do
+        assert_raises MissingActiveAuthorityError do
+          Broadcast.account_update2(@broadcast_options.merge(options))
+        end
+      end
+    end
+    
+    def test_account_update2_both_metadata
+      options = {
+        params: {
+          metadata: {},
+          json_metadata: '{}'
+        }
+      }
+      
+      assert_raises Hive::ArgumentError do
+        Broadcast.account_update2(@broadcast_options.merge(options))
+      end
+    end
+    
+    def test_account_update2_empty
+      options = {
+        params: {
+          account: @account_name,
+          json_metadata: '{}'
+        }
+      }
+      
+      vcr_cassette('broadcast_account_update_empty') do
+        assert_raises MissingActiveAuthorityError do
+          Broadcast.account_update2(@broadcast_options.merge(options))
+        end
+      end
+    end
+    
+    def test_create_proposal
+      options = {
+        params: {
+          creator: @account_name,
+          receiver: '',
+          start_date: (Time.now.utc + 300),
+          end_date: (Time.now.utc + 900),
+          daily_pay: "0.000 #{@debt_symbol}",
+          subject: 'subject',
+          permlink: 'permlink'
+        }
+      }
+      
+      vcr_cassette('broadcast_create_proposal') do
+        assert_raises MissingActiveAuthorityError do
+          Broadcast.create_proposal(@broadcast_options.merge(options))
+        end
+      end
+    end
+    
+    def test_update_proposal_votes
+      options = {
+        params: {
+          voter: @account_name,
+          proposal_ids: ['1'],
+          approve: true
+        }
+      }
+      
+      vcr_cassette('broadcast_update_proposal_votes') do
+        assert_raises MissingActiveAuthorityError do
+          Broadcast.update_proposal_votes(@broadcast_options.merge(options))
+        end
+      end
+    end
+    
+    def test_remove_proposal
+      options = {
+        params: {
+          proposal_owner: @account_name,
+          proposal_ids: ['1']
+        }
+      }
+      
+      vcr_cassette('broadcast_remove_proposal') do
+        assert_raises MissingActiveAuthorityError do
+          Broadcast.remove_proposal(@broadcast_options.merge(options))
         end
       end
     end

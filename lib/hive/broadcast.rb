@@ -1237,7 +1237,124 @@ module Hive
       
       process(options.merge(ops: ops), &block)
     end
-        
+    
+    # @param options [Hash] options
+    # @option options [String] :wif Posting wif
+    # @option options [Hash] :params
+    #   * :account (String) Account claiming rewards.
+    #   * :reward_steem (Amount) Amount of HIVE to claim.
+    #   * :reward_sbd (Amount) Amount of HBD to claim.
+    #   * :reward_vests (Amount) Amount of VESTS to claim.
+    # @option options [Boolean] :pretend Just validate, do not broadcast.
+    # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_claim_reward_balance
+    def self.claim_reward_balance(options, &block)
+      required_fields = %i(account)
+      params = options[:params]
+      
+      check_required_fields(params, *required_fields)
+      
+      params[:reward_steem] = normalize_amount(options.merge amount: params[:reward_steem])
+      params[:reward_sbd] = normalize_amount(options.merge amount: params[:reward_sbd])
+      params[:reward_vests] = normalize_amount(options.merge amount: params[:reward_vests])
+      
+      ops = [[:claim_reward_balance, params]]
+      
+      process(options.merge(ops: ops), &block)
+    end
+    
+    # @param options [Hash] options
+    # @option options [String] :wif Active wif
+    # @option options [Hash] :params
+    #   * :account (String) Account being updated.
+    #   * :metadata (Hash) Metadata of the account, becomes `json_metadata`.
+    #   * :json_metadata (String) String version of `metadata` (use one or the other).
+    # @option options [Boolean] :pretend Just validate, do not broadcast.
+    # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_account_update2
+    def self.account_update2(options, &block)
+      required_fields = %i(account)
+      params = options[:params]
+      
+      check_required_fields(params, *required_fields)
+      
+      if !!params[:metadata] && !!params[:json_metadata]
+        raise Hive::ArgumentError, 'Assign either metadata or json_metadata, not both.'
+      end
+      
+      metadata = params.delete(:metadata) || {}
+      metadata ||= (JSON[params[:json_metadata]] || nil) || {}
+      params[:json_metadata] = metadata.to_json
+      
+      ops = [[:account_update2, params]]
+      
+      process(options.merge(ops: ops), &block)
+    end
+    
+    # @param options [Hash] options
+    # @option options [String] :wif Active wif
+    # @option options [Hash] :params
+    #   * :creator (String) Creator of the new proposal.
+    #   * :receiver (String) Reciever of `daily_pay` (or creator if empty)
+    #   * :start_date (String) When the proposal starts.
+    #   * :end_date (String) When the proposal ends.
+    #   * :daily_pay (String) Daily pay in HBD starting on the `start_date` and ending on the `end_date`.
+    #   * :subject (String) Subject of the proposal.
+    #   * :permlink (String) Proposal permlink must point to the article posted by creator or receiver.
+    # @option options [Boolean] :pretend Just validate, do not broadcast.
+    # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_create_proposal
+    def self.create_proposal(options, &block)
+      required_fields = %i(creator start_date end_date daily_pay subject permlink)
+      params = options[:params]
+      
+      check_required_fields(params, *required_fields)
+      
+      params[:start_date] = Time.parse(params[:start_date].to_s)
+      params[:start_date] = params[:start_date].strftime('%Y-%m-%dT%H:%M:%S')
+      params[:end_date] = Time.parse(params[:end_date].to_s)
+      params[:end_date] = params[:end_date].strftime('%Y-%m-%dT%H:%M:%S')
+      params[:daily_pay] = normalize_amount(options.merge amount: params[:daily_pay])
+      
+      ops = [[:create_proposal, params]]
+      
+      process(options.merge(ops: ops), &block)
+    end
+    
+    # @param options [Hash] options
+    # @option options [String] :wif Active wif
+    # @option options [Hash] :params
+    #   * :voter (String) Account doing approval (or removing approval).
+    #   * :proposal_ids (Array<Integer>) Proposals to approve (or remove approval) for.
+    #   * :approve (Boolean) Approve or unapprove.
+    # @option options [Boolean] :pretend Just validate, do not broadcast.
+    # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_update_proposal_votes
+    def self.update_proposal_votes(options, &block)
+      required_fields = %i(voter proposal_ids approve)
+      params = options[:params]
+      
+      check_required_fields(params, *required_fields)
+      
+      ops = [[:update_proposal_votes, params]]
+      
+      process(options.merge(ops: ops), &block)
+    end
+    
+    # @param options [Hash] options
+    # @option options [String] :wif Active wif
+    # @option options [Hash] :params
+    #   * :proposal_owner (String) Creator of the proposal.
+    #   * :proposal_ids (Array<Integer>) Proposals to remove.
+    # @option options [Boolean] :pretend Just validate, do not broadcast.
+    # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_update_proposal_votes
+    def self.remove_proposal(options, &block)
+      required_fields = %i(proposal_owner proposal_ids)
+      params = options[:params]
+      
+      check_required_fields(params, *required_fields)
+      
+      ops = [[:remove_proposal, params]]
+      
+      process(options.merge(ops: ops), &block)
+    end
+    
     # @param options [Hash] options
     # @option options [Array<Array<Hash>] :ops Operations to process.
     # @option options [Boolean] :pretend Just validate, do not broadcast.

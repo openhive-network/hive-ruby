@@ -5,7 +5,7 @@ module Hive
     include Utils
     
     # IDs derrived from:
-    # https://github.com/openhive-network/hive/blob/127a441fbac2f06804359968bda83b66e602c891/libraries/protocol/include/steem/protocol/operations.hpp
+    # https://gitlab.syncad.com/hive/hive/-/blob/master/libraries/protocol/include/steem/protocol/operations.hpp
     
     IDS = [
       :vote_operation,
@@ -60,6 +60,10 @@ module Hive
       :delegate_vesting_shares_operation,
       :account_create_with_delegation_operation,
       :witness_set_properties_operation,
+      :account_update2_operation,
+      :create_proposal_operation,
+      :update_proposal_votes_operation,
+      :remove_proposal_operation,
       
       # SMT operations
       :claim_reward_balance2_operation,
