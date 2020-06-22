@@ -726,8 +726,12 @@ module Hive
       end
       
       %i(key new_signing_key).each do |key|
-        if !!props[key] && props[key].length == 53
-          props[key] = hexlify props[key][3..-1]
+        begin
+          if !!props[key] && props[key].length == 53
+            props[key] = hexlify props[key][3..-1]
+          end
+        rescue => e
+          raise Hive::ArgumentError, "Unable to parse #{key}: #{e}"
         end
       end
       
