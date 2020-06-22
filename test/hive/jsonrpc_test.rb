@@ -266,6 +266,9 @@ module Hive
           assert_equal Hash, methods.class, "did not expect: #{methods.inspect}"
           methods.each do |method, signature|
             assert_equal Symbol, method.class, "did not expect: #{method.inspect}"
+            
+            next if api == :bridge
+            
             assert_equal Hashie::Mash, signature.class, "did not expect: #{signature.inspect}"
             refute_nil signature.args, "did not expect #{api}.#{method} to have nil args"
             
