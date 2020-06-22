@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
   spec.files = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test)/}) }
   spec.require_paths = ['lib']
 
-  spec.add_development_dependency 'bundler', '~> 1.16', '>= 1.16.1'
+  spec.add_development_dependency 'bundler', '~> 2.1', '>= 2.1.4'
   spec.add_development_dependency 'rake', '~> 13.0.1', '>= 12.3.0'
   spec.add_development_dependency 'minitest', '~> 5.14', '>= 5.10.3'
   spec.add_development_dependency 'minitest-line', '~> 0.6', '>= 0.6.4'
