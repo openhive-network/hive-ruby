@@ -18,7 +18,8 @@ module Hive
       # @private
       TIMEOUT_ERRORS = [Net::OpenTimeout, JSON::ParserError, Net::ReadTimeout,
         Errno::EBADF, IOError, Errno::ENETDOWN, Hive::RemoteDatabaseLockError,
-        Hive::RequestTimeoutUpstreamResponseError, Hive::RemoteNodeError]
+        Hive::RequestTimeoutUpstreamResponseError, Hive::RemoteServerError,
+        Hive::RemoteServerError]
       
       # @private
       POST_HEADERS = {

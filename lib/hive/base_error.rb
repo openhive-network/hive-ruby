@@ -19,15 +19,19 @@ module Hive
       end
       
       if error.message.include? 'Internal Error'
-        raise Hive::RemoteNodeError, error.message, build_backtrace(error)
+        raise Hive::RemoteInternalError, error.message, build_backtrace(error)
       end
       
       if error.message.include? 'Server error'
-        raise Hive::RemoteNodeError, error.message, build_backtrace(error)
+        raise Hive::RemoteServerError, error.message, build_backtrace(error)
       end
       
-      if error.message.include? 'plugin not enabled'
+      if error.message.include?('plugin not enabled') || error.message.include?('Could not find API')
         raise Hive::PluginNotEnabledError, error.message, build_backtrace(error)
+      end
+      
+      if error.message.include? 'Supported by hivemind'
+        raise Hive::MethodNotEnabledError, error.message, build_backtrace(error)
       end
       
       if error.message.include? 'argument'
@@ -210,9 +214,12 @@ module Hive
   class IncorrectRequestIdError < BaseError; end
   class IncorrectResponseIdError < BaseError; end
   class RemoteNodeError < BaseError; end
+  class RemoteInternalError < BaseError; end
+  class RemoteServerError < BaseError; end
   class UpstreamResponseError < RemoteNodeError; end
   class RemoteDatabaseLockError < UpstreamResponseError; end
   class PluginNotEnabledError < UpstreamResponseError; end
+  class MethodNotEnabledError < UpstreamResponseError; end
   class RequestTimeoutUpstreamResponseError < UpstreamResponseError; end
   class BadOrMissingUpstreamResponseError < UpstreamResponseError; end
   class TransactionIndexDisabledError < BaseError; end
