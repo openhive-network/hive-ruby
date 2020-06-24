@@ -112,20 +112,20 @@ namespace :test do
               [k, v] if keys.include? k.to_sym
             end.compact.to_h
             
-            sbd_exchange_rate = witness[:sbd_exchange_rate]
-            base = sbd_exchange_rate[:base].to_f
+            hbd_exchange_rate = witness[:hbd_exchange_rate] || witness[:sbd_exchange_rate]
+            base = hbd_exchange_rate[:base].to_f
             
-            if (quote = sbd_exchange_rate[:quote].to_f) > 0
+            if (quote = hbd_exchange_rate[:quote].to_f) > 0
               rate = (base / quote).round(3)
-              witnesses[witness.owner][:sbd_exchange_rate] = rate
+              witnesses[witness.owner][:hbd_exchange_rate] = rate
             else
-              witnesses[witness.owner][:sbd_exchange_rate] = nil
+              witnesses[witness.owner][:hbd_exchange_rate] = nil
             end
             
-            last_sbd_exchange_update = witness[:last_sbd_exchange_update]
-            last_sbd_exchange_update = Time.parse(last_sbd_exchange_update + 'Z')
-            last_sbd_exchange_elapsed = '%.2f hours ago' % ((Time.now.utc - last_sbd_exchange_update) / 60)
-            witnesses[witness.owner][:last_sbd_exchange_elapsed] = last_sbd_exchange_elapsed
+            last_hbd_exchange_update = witness[:last_hbd_exchange_update] || witness[:last_sbd_exchange_update]
+            last_hbd_exchange_update = Time.parse(last_hbd_exchange_update + 'Z')
+            last_hbd_exchange_elapsed = '%.2f hours ago' % ((Time.now.utc - last_hbd_exchange_update) / 60)
+            witnesses[witness.owner][:last_hbd_exchange_elapsed] = last_hbd_exchange_elapsed
           end
         end
       end

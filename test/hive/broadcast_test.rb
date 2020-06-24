@@ -44,7 +44,11 @@ module Hive
       }
       
       @core_symbol, @debt_symbol, @vest_symbol = @database_api.get_dynamic_global_properties do |dgpo|
-        [dgpo.current_supply.split(' ').last, dgpo.current_sbd_supply.split(' ').last, dgpo.total_vesting_shares.split(' ').last]
+        current_supply = dgpo.current_supply
+        current_hbd_supply = dgpo.current_hbd_supply || dgpo.current_sbd_supply
+        total_vesting_shares = dgpo.total_vesting_shares
+        
+        [current_supply.split(' ').last, current_hbd_supply.split(' ').last, total_vesting_shares.split(' ').last]
       end
       
       @force_serialize = true

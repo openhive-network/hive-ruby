@@ -192,7 +192,11 @@ module Hive
         }
         
         assert_raises Hive::ArgumentError do
-          @api.get_trending_topics(options)
+          begin
+            @api.get_trending_topics(options)
+          rescue Hive::PluginNotEnabledError => e
+            skip e.inspect
+          end
         end
       end
     end
@@ -209,7 +213,11 @@ module Hive
         }
         
         assert_raises Hive::ArgumentError do
-          @api.post_notifications(options)
+          begin
+            @api.post_notifications(options)
+          rescue Hive::PluginNotEnabledError => e
+            skip e.inspect
+          end
         end
       end
     end
@@ -276,7 +284,11 @@ module Hive
         }
         
         assert_raises Hive::ArgumentError do
-          @api.list_communities(options)
+          begin
+            @api.list_communities(options)
+          rescue Hive::PluginNotEnabledError => e
+            skip e.inspect
+          end
         end
       end
     end

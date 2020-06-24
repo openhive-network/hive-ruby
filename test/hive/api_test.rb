@@ -148,7 +148,11 @@ module Hive
           when *METHOD_NAMES_2_ARGS
           then
             assert_raises Hive::ArgumentError, "expect 2 arguments to raise ArgumentError for: #{key}" do
-              assert @api.send key, [nil, nil]
+              begin
+                assert @api.send key, [nil, nil]
+              rescue MethodNotEnabledError => e
+                skip e.inspect
+              end
             end
           when *METHOD_NAMES_3_ARGS
           then
@@ -182,7 +186,11 @@ module Hive
     def test_get_content_wrong_arguments
       vcr_cassette('condenser_api_get_content_wrong_arguments') do
         assert_raises Hive::ArgumentError, 'expect argument error' do
-          @api.get_content
+          begin
+            @api.get_content
+          rescue MethodNotEnabledError => e
+            skip e.inspect
+          end
         end
         
         assert_raises Hive::ArgumentError, 'expect argument error' do
