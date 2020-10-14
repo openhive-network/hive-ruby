@@ -62,8 +62,8 @@ module Hive
             "type": "claim_reward_balance_operation",
             "value": {
               "account": "teacherpearline",
-              "reward_steem": {"amount": "0", "precision": 3, "nai": "@@000000021"},
-              "reward_sbd": {"amount": "845", "precision": 3, "nai": "@@000000013"},
+              "reward_hive": {"amount": "0", "precision": 3, "nai": "@@000000021"},
+              "reward_hbd": {"amount": "845", "precision": 3, "nai": "@@000000013"},
               "reward_vests": {"amount": "404731593", "precision": 6, "nai": "@@000000037"}
             }
           }
@@ -84,8 +84,8 @@ module Hive
       
       assert_equal :claim_reward_balance_operation, marshal.operation_type, 'expect operation type: claim_reward_balance_operation'
       assert_equal 'teacherpearline', marshal.string, 'expect account: teacherpearline'
-      assert_equal Type::Amount.new('0.000 STEEM').to_s, marshal.amount.to_s, 'expect amount: 0.000 STEEM'
-      assert_equal Type::Amount.new('0.845 SBD').to_s, marshal.amount.to_s, 'expect amount: 0.845 SBD'
+      assert_equal Type::Amount.new('0.000 HIVE').to_s, marshal.amount.to_s, 'expect amount: 0.000 HIVE'
+      assert_equal Type::Amount.new('0.845 HBD').to_s, marshal.amount.to_s, 'expect amount: 0.845 HBD'
       assert_equal Type::Amount.new('404.731593 VESTS').to_s, marshal.amount.to_s, 'expect amount: 0.000 VESTS'
     end
     
@@ -208,8 +208,8 @@ module Hive
         to: 'alice',
         agent: 'bob',
         escrow_id: 1234,
-        sbd_amount: '0.000 HBD',
-        steem_amount: '0.000 HIVE',
+        hbd_amount: '0.000 HBD',
+        hive_amount: '0.000 HIVE',
         fee: '0.000 HIVE',
         ratification_deadline: '2018-10-15T19:52:09',
         escrow_expiration: '2018-10-15T19:52:09',
@@ -226,8 +226,8 @@ module Hive
       assert_equal :escrow_transfer_operation, marshal.operation_type, 'expect operation type: escrow_transfer_operation'
       assert_equal 'social', marshal.string, 'expect from: social'
       assert_equal 'alice', marshal.string, 'expect to: alice'
-      assert_equal '0.000 HBD', marshal.amount.to_s, 'expect sbd_amount: 0.000 HBD'
-      assert_equal '0.000 HIVE', marshal.amount.to_s, 'expect steem_amount: 0.000 HIVE'
+      assert_equal '0.000 HBD', marshal.amount.to_s, 'expect hbd_amount: 0.000 HBD'
+      assert_equal '0.000 HIVE', marshal.amount.to_s, 'expect hive_amount: 0.000 HIVE'
       assert_equal 1234, marshal.uint32, 'expect escrow_id: 1234'
       assert_equal 'bob', marshal.string, 'expect agent: bob'
       assert_equal '0.000 HIVE', marshal.amount.to_s, 'expect fee: 0.000 HIVE'
@@ -272,7 +272,7 @@ module Hive
         author: 'alice',
         permlink: 'permlink',
         max_accepted_payout: '1000000.000 HBD',
-        percent_steem_dollars: 10000,
+        percent_hbd: 10000,
         # allow_replies: true,
         allow_votes: true,
         allow_curation_rewards: true,
@@ -307,7 +307,7 @@ module Hive
       assert_equal 'alice', marshal.string, 'expect author: alice'
       assert_equal 'permlink', marshal.string, 'expect permlink: permlink'
       assert_equal '1000000.000 HBD', marshal.amount.to_s, 'expect max_accepted_payout: 1000000.000 HBD'
-      assert_equal 10000, marshal.uint16, 'expect percent_steem_dollars: 10000'
+      assert_equal 10000, marshal.uint16, 'expect percent_hbd: 10000'
       # assert_equal true, marshal.boolean, 'expect allow_replies: true'
       assert_equal true, marshal.boolean, 'expect allow_votes: true'
       assert_equal true, marshal.boolean, 'expect allow_curation_rewards: true'
@@ -327,7 +327,7 @@ module Hive
         author: 'alice',
         permlink: 'permlink',
         max_accepted_payout: '1000000.000 HBD',
-        percent_steem_dollars: 10000,
+        percent_hbd: 10000,
         # allow_replies: true,
         allow_votes: true,
         allow_curation_rewards: true,
@@ -351,7 +351,7 @@ module Hive
       assert_equal 'alice', marshal.string, 'expect author: alice'
       assert_equal 'permlink', marshal.string, 'expect permlink: permlink'
       assert_equal '1000000.000 HBD', marshal.amount.to_s, 'expect max_accepted_payout: 1000000.000 HBD'
-      assert_equal 10000, marshal.uint16, 'expect percent_steem_dollars: 10000'
+      assert_equal 10000, marshal.uint16, 'expect percent_hbd: 10000'
       # assert_equal true, marshal.boolean, 'expect allow_replies: true'
       assert_equal true, marshal.boolean, 'expect allow_votes: true'
       assert_equal true, marshal.boolean, 'expect allow_curation_rewards: true'

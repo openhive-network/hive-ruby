@@ -137,7 +137,7 @@ module Hive
     #   * :parent_permlink (String) (automatic) Parent permlink of the content, defaults to first tag.
     #   * :parent_author (String) (optional) Parent author of the content (only used if reply).
     #   * :max_accepted_payout (String) (1000000.000 HBD) Maximum accepted payout, set to '0.000 HBD' to deline payout
-    #   * :percent_steem_dollars (Numeric) (5000) Percent HIVE Dollars is used to set 50/50 or 100% HIVE Power
+    #   * :percent_hbd (Numeric) (5000) Percent HIVE Dollars is used to set 50/50 or 100% HIVE Power
     #   * :allow_votes (Numeric) (true) Allow votes for this content.
     #   * :allow_curation_rewards (Numeric) (true) Allow curation rewards for this content.
     #   * :beneficiaries (Array<Hash>) Sets the beneficiaries of this content.
@@ -196,7 +196,7 @@ module Hive
         author: params[:author],
         permlink: params[:permlink],
         max_accepted_payout: max_accepted_payout,
-        percent_steem_dollars: params[:percent_steem_dollars] || 10000,
+        percent_hbd: params[:percent_hbd] || 10000,
         # allow_replies: allow_replies,
         allow_votes: allow_votes,
         allow_curation_rewards: allow_curation_rewards,
@@ -646,7 +646,7 @@ module Hive
     #         props: {
     #           account_creation_fee: '0.000 HIVE',
     #           maximum_block_size: 131072,
-    #           sbd_interest_rate:1000
+    #           hbd_interest_rate:1000
     #         },
     #         fee: '0.000 HIVE',
     #       }
@@ -688,10 +688,10 @@ module Hive
     #         props: {
     #           account_creation_fee: '0.000 HIVE',
     #           maximum_block_size: 131072,
-    #           sbd_interest_rate: 1000,
+    #           hbd_interest_rate: 1000,
     #           account_subsidy_budget: 50000,
     #           account_subsidy_decay: 330782,
-    #           sbd_exchange_rate: '1.000 HIVE',
+    #           hbd_exchange_rate: '1.000 HIVE',
     #           url: "https://hive.blog",
     #           new_signing_key: 'STM8LoQjQqJHvotqBo7HjnqmUbFW9oJ2theyqonzUd9DdJ7YYHsvD'
     #         }
@@ -719,10 +719,10 @@ module Hive
         props[:account_creation_fee] = hexlify normalize_amount(options.merge amount: account_creation_fee, serialize: true)
       end
       
-      if !!(sbd_exchange_rate = props[:sbd_exchange_rate] rescue nil)
-        props[:sbd_exchange_rate][:base] = normalize_amount(options.merge amount: sbd_exchange_rate[:base], serialize: true)
-        props[:sbd_exchange_rate][:quote] = normalize_amount(options.merge amount: sbd_exchange_rate[:quote], serialize: true)
-        props[:sbd_exchange_rate] = hexlify props[:sbd_exchange_rate].to_json
+      if !!(hbd_exchange_rate = props[:hbd_exchange_rate] rescue nil)
+        props[:hbd_exchange_rate][:base] = normalize_amount(options.merge amount: hbd_exchange_rate[:base], serialize: true)
+        props[:hbd_exchange_rate][:quote] = normalize_amount(options.merge amount: hbd_exchange_rate[:quote], serialize: true)
+        props[:hbd_exchange_rate] = hexlify props[:hbd_exchange_rate].to_json
       end
       
       %i(key new_signing_key).each do |key|
@@ -957,8 +957,8 @@ module Hive
     #   * :to (String)
     #   * :agent (String)
     #   * :escrow_id (String)
-    #   * :sbd_amount (String)
-    #   * :steem_amount (String)
+    #   * :hbd_amount (String)
+    #   * :hive_amount (String)
     #   * :fee (String)
     #   * :ratification_deadline (String)
     #   * :escrow_expiration (String)
@@ -980,8 +980,8 @@ module Hive
       
       check_required_fields(params, *required_fields)
       
-      params[:sbd_amount] = normalize_amount(options.merge amount: params[:sbd_amount])
-      params[:steem_amount] = normalize_amount(options.merge amount: params[:steem_amount])
+      params[:hbd_amount] = normalize_amount(options.merge amount: params[:hbd_amount])
+      params[:hive_amount] = normalize_amount(options.merge amount: params[:hive_amount])
       params[:fee] = normalize_amount(options.merge amount: params[:fee])
       
       params[:ratification_deadline] = Time.parse(params[:ratification_deadline].to_s)
@@ -1032,8 +1032,8 @@ module Hive
     #   * :who (String)
     #   * :receiver (String)
     #   * :escrow_id (String)
-    #   * :sbd_amount (String)
-    #   * :steem_amount (String)
+    #   * :hbd_amount (String)
+    #   * :hive_amount (String)
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_escrow_release
     def self.escrow_release(options, &block)
@@ -1041,8 +1041,8 @@ module Hive
       params = options[:params]
       check_required_fields(params, *required_fields)
       
-      params[:sbd_amount] = normalize_amount(options.merge amount: params[:sbd_amount])
-      params[:steem_amount] = normalize_amount(options.merge amount: params[:steem_amount])
+      params[:hbd_amount] = normalize_amount(options.merge amount: params[:hbd_amount])
+      params[:hive_amount] = normalize_amount(options.merge amount: params[:hive_amount])
 
       ops = [[:escrow_release, params]]
       
@@ -1246,8 +1246,8 @@ module Hive
     # @option options [String] :wif Posting wif
     # @option options [Hash] :params
     #   * :account (String) Account claiming rewards.
-    #   * :reward_steem (Amount) Amount of HIVE to claim.
-    #   * :reward_sbd (Amount) Amount of HBD to claim.
+    #   * :reward_hive (Amount) Amount of HIVE to claim.
+    #   * :reward_hbd (Amount) Amount of HBD to claim.
     #   * :reward_vests (Amount) Amount of VESTS to claim.
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_claim_reward_balance
@@ -1257,8 +1257,8 @@ module Hive
       
       check_required_fields(params, *required_fields)
       
-      params[:reward_steem] = normalize_amount(options.merge amount: params[:reward_steem])
-      params[:reward_sbd] = normalize_amount(options.merge amount: params[:reward_sbd])
+      params[:reward_hive] = normalize_amount(options.merge amount: params[:reward_hive])
+      params[:reward_hbd] = normalize_amount(options.merge amount: params[:reward_hbd])
       params[:reward_vests] = normalize_amount(options.merge amount: params[:reward_vests])
       
       ops = [[:claim_reward_balance, params]]

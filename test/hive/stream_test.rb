@@ -153,7 +153,7 @@ module Hive
           votes_found = true
         end
         
-        fail 'no vote ops found' unless votes_found
+        skip 'no vote ops found' unless votes_found
       end
     end
     

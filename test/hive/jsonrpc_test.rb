@@ -17,9 +17,15 @@ module Hive
         assert_equal Hashie::Mash, apis.class
         
         expected_apis = {
-          # account_by_key_api: [
-          #   "get_key_references"
-          # ],
+          account_by_key_api: [
+            "get_key_references"
+          ],
+          account_history_api: [
+            "enum_virtual_ops",
+            "get_account_history",
+            "get_ops_in_block",
+            "get_transaction"
+          ],
           block_api: [
             "get_block",
             "get_block_header"
@@ -123,7 +129,6 @@ module Hive
             "find_limit_orders",
             "find_owner_histories",
             "find_savings_withdrawals",
-            "find_sbd_conversion_requests",
             "find_vesting_delegation_expirations",
             "find_vesting_delegations",
             "find_votes",
@@ -145,13 +150,11 @@ module Hive
             "list_account_recovery_requests",
             "list_accounts",
             "list_change_recovery_account_requests",
-            "list_comments",
             "list_decline_voting_rights_requests",
             "list_escrows",
             "list_limit_orders",
             "list_owner_histories",
             "list_savings_withdrawals",
-            "list_sbd_conversion_requests",
             "list_vesting_delegation_expirations",
             "list_vesting_delegations",
             "list_votes",
@@ -163,7 +166,10 @@ module Hive
             "verify_signatures",
             "find_proposals",
             "list_proposal_votes",
-            "list_proposals"
+            "list_proposals",
+            "find_hbd_conversion_requests",
+            "get_comment_pending_payouts",
+            "list_hbd_conversion_requests"
           ],
           # follow_api: [
           #   "get_account_reputations",
@@ -181,24 +187,24 @@ module Hive
             "get_methods",
             "get_signature"
           ],
-          # market_history_api: [
-          #   "get_market_history",
-          #   "get_market_history_buckets",
-          #   "get_order_book",
-          #   "get_recent_trades",
-          #   "get_ticker",
-          #   "get_trade_history",
-          #   "get_volume"
-          # ],
-          # network_broadcast_api: [
-          #   "broadcast_block",
-          #   "broadcast_transaction"
-          # ],
-          # rc_api: [
-          #   "find_rc_accounts",
-          #   "get_resource_params",
-          #   "get_resource_pool"
-          # ],
+          market_history_api: [
+            "get_market_history",
+            "get_market_history_buckets",
+            "get_order_book",
+            "get_recent_trades",
+            "get_ticker",
+            "get_trade_history",
+            "get_volume"
+          ],
+          network_broadcast_api: [
+            "broadcast_block",
+            "broadcast_transaction"
+          ],
+          rc_api: [
+            "find_rc_accounts",
+            "get_resource_params",
+            "get_resource_pool"
+          ],
           # tags_api: [
           #   "get_active_votes",
           #   "get_comment_discussions_by_payout",
@@ -221,6 +227,9 @@ module Hive
           #   "get_tags_used_by_author",
           #   "get_trending_tags"
           # ],
+          transaction_status_api: [
+            "find_transaction"
+          ],
           reputation_api: [
             "get_account_reputations"
           ]
@@ -236,12 +245,13 @@ module Hive
         
         expected_apis.each do |api, methods|
           method_names = apis[api].map(&:to_s)
-          unexpected_methods = (methods + method_names).uniq - methods
+          fallback_methods = [Fallback::API_METHODS[api.to_sym]].flatten.compact.map(&:to_s)
+          unexpected_methods = (methods + method_names).uniq - methods - fallback_methods
           missing_methods = (methods + method_names).uniq - method_names
           
           assert_equal [], unexpected_methods, "found unexpected methods for api: #{api}"
           assert_equal [], missing_methods, "missing expected methods for api: #{api}"
-          assert_equal expected_apis[api].size, apis[api].size, "expected #{expected_apis[api].size} methods for #{api}, found: #{apis[api].size}"
+          assert_equal expected_apis[api].size, (apis[api] - fallback_methods).size, "expected #{expected_apis[api].size} methods for #{api}, found: #{(apis[api] - fallback_methods).size}"
         end
       end
     end

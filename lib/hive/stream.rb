@@ -173,7 +173,7 @@ module Hive
     #   stream = Hive::Stream.new
     #   stream.operations(types: :author_reward_operation, only_virtual: true) do |vop|
     #     v = vop.value
-    #     puts "#{v.author} got paid for #{v.permlink}: #{[v.sbd_payout, v.steem_payout, v.vesting_payout]}"
+    #     puts "#{v.author} got paid for #{v.permlink}: #{[v.hbd_payout, v.hive_payout, v.vesting_payout]}"
     #   end
     #
     # ... or multiple virtual operation types;

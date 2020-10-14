@@ -118,7 +118,9 @@ module Hive
         
         if Jsonrpc::UNLISTED_APIS.include? @api_name
           @methods ||= {}
-          @methods[@api_name] ||= Fallback::API_METHODS[@api_name]
+          @methods[@api_name] ||= []
+          @methods[@api_name] += Fallback::API_METHODS[@api_name]
+          @methods[@api_name] = @methods[@api_name].uniq
         end
         
         unless !!@methods[@api_name]

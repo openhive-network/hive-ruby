@@ -1,8 +1,8 @@
 class Hive::Operation::EscrowTransfer < Hive::Operation
   def_attr from: :string
   def_attr to: :string
-  def_attr sbd_amount: :amount
-  def_attr steem_amount: :amount
+  def_attr hbd_amount: :amount
+  def_attr hive_amount: :amount
   def_attr escrow_id: :uint32
   def_attr agent: :string
   def_attr fee: :amount

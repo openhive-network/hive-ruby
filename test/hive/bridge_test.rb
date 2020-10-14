@@ -44,7 +44,7 @@ module Hive
           assert_equal permlink, result.permlink
           
           known_normalization_fields = %w(post_id updated is_paidout payout_at payout
-            author_payout_value stats)
+            author_payout_value stats blacklists)
             
           assert_equal known_normalization_fields, result.keys - post.keys, 'found unknown fields added by hivemind normalization'
         end

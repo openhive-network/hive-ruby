@@ -112,7 +112,7 @@ namespace :test do
               [k, v] if keys.include? k.to_sym
             end.compact.to_h
             
-            hbd_exchange_rate = witness[:hbd_exchange_rate] || witness[:sbd_exchange_rate]
+            hbd_exchange_rate = witness[:hbd_exchange_rate] || witness[:hbd_exchange_rate]
             base = hbd_exchange_rate[:base].to_f
             
             if (quote = hbd_exchange_rate[:quote].to_f) > 0
@@ -122,7 +122,7 @@ namespace :test do
               witnesses[witness.owner][:hbd_exchange_rate] = nil
             end
             
-            last_hbd_exchange_update = witness[:last_hbd_exchange_update] || witness[:last_sbd_exchange_update]
+            last_hbd_exchange_update = witness[:last_hbd_exchange_update] || witness[:last_hbd_exchange_update]
             last_hbd_exchange_update = Time.parse(last_hbd_exchange_update + 'Z')
             last_hbd_exchange_elapsed = '%.2f hours ago' % ((Time.now.utc - last_hbd_exchange_update) / 60)
             witnesses[witness.owner][:last_hbd_exchange_elapsed] = last_hbd_exchange_elapsed
