@@ -11,7 +11,7 @@ module Hive
     
     # APIs that the RPC server will (or likely will) respond to that is
     # maintained outside the view of jsonrpc.
-    UNLISTED_APIS = %i(bridge)
+    UNLISTED_APIS = %i(bridge database_api)
     
     def self.api_methods
       @api_methods ||= {}

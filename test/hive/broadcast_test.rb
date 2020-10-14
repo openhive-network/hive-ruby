@@ -45,7 +45,7 @@ module Hive
       
       @core_symbol, @debt_symbol, @vest_symbol = @database_api.get_dynamic_global_properties do |dgpo|
         current_supply = dgpo.current_supply
-        current_hbd_supply = dgpo.current_hbd_supply || dgpo.current_sbd_supply
+        current_hbd_supply = dgpo.current_hbd_supply
         total_vesting_shares = dgpo.total_vesting_shares
         
         [current_supply.split(' ').last, current_hbd_supply.split(' ').last, total_vesting_shares.split(' ').last]
@@ -653,7 +653,7 @@ module Hive
           props: {
             account_creation_fee: "0.000 #{@core_symbol}",
             maximum_block_size: 131072,
-            sbd_interest_rate: 1000
+            hbd_interest_rate: 1000
           },
           fee: "0.000 #{@core_symbol}"
         }
@@ -673,11 +673,11 @@ module Hive
           props: {
             account_creation_fee: "0.000 #{@core_symbol}",
             maximum_block_size: 131072,
-            # sbd_interest_rate: 1000,
+            # hbd_interest_rate: 1000,
             # account_subsidy_budget: 50000,
             account_subsidy_decay: 330782,
-            sbd_exchange_rate: {base: '1.000 HBD', quote: '1.000 HIVE'},
-            url: 'https://steemit.com',
+            hbd_exchange_rate: {base: '1.000 HBD', quote: '1.000 HIVE'},
+            url: 'https://hive.blog',
             new_signing_key: 'STM8LoQjQqJHvotqBo7HjnqmUbFW9oJ2theyqonzUd9DdJ7YYHsvD'
           }
         },
@@ -697,8 +697,8 @@ module Hive
           owner: @account_name,
           props: {
             account_creation_fee: "0.000 #{@core_symbol}",
-            sbd_exchange_rate: {base: '1.000 HBD', quote: '1.000 HIVE'},
-            url: 'https://steemit.com',
+            hbd_exchange_rate: {base: '1.000 HBD', quote: '1.000 HIVE'},
+            url: 'https://hive.blog',
             new_signing_key: 'STM8LoQjQqJHvotqBo7HjnqmUbFW9oJ2theyqonzUd9DdJ7YYHsvD'
           }
         },
@@ -915,8 +915,8 @@ module Hive
           to: 'alice',
           agent: 'bob',
           escrow_id: 1234,
-          sbd_amount: "0.000 #{@debt_symbol}",
-          steem_amount: "0.000 #{@core_symbol}",
+          hbd_amount: "0.000 #{@debt_symbol}",
+          hive_amount: "0.000 #{@core_symbol}",
           fee: "0.000 #{@core_symbol}",
           ratification_deadline: (Time.now.utc + 300),
           escrow_expiration: (Time.now.utc + 3000),
@@ -972,8 +972,8 @@ module Hive
           who: 'alice',
           receiver: 'alice',
           escrow_id: '1234',
-          sbd_amount: "0.000 #{@debt_symbol}",
-          steem_amount: "0.000 #{@core_symbol}"
+          hbd_amount: "0.000 #{@debt_symbol}",
+          hive_amount: "0.000 #{@core_symbol}"
         }
       }
     
@@ -1166,8 +1166,8 @@ module Hive
       options = {
         params: {
           account: @account_name,
-          reward_steem: "0.000 #{@core_symbol}",
-          reward_sbd: "0.000 #{@debt_symbol}",
+          reward_hive: "0.000 #{@core_symbol}",
+          reward_hbd: "0.000 #{@debt_symbol}",
           reward_vests: "0.000000 #{@vest_symbol}"
         }
       }
@@ -1293,7 +1293,7 @@ module Hive
         min_to_receive new_account_name new_owner_authority new_recovery_account
         orderid owner parent_permlink percent permlink posting props proxy
         publisher ratification_deadline recent_owner_authority recovery_account
-        requestid required_auths required_posting_auths sbd_amount steem_amount
+        requestid required_auths required_posting_auths hbd_amount hive_amount
         title to to_account url vesting_shares voter weight who witness)
       
       options = {}

@@ -5,6 +5,6 @@ class Hive::Operation::EscrowRelease < Hive::Operation
   def_attr who: :string
   def_attr receiver: :string
   def_attr escrow_id: :uint32
-  def_attr sbd_amount: :amount
-  def_attr steem_amount: :amount
+  def_attr hbd_amount: :amount
+  def_attr hive_amount: :amount
 end

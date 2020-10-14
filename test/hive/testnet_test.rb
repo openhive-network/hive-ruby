@@ -16,12 +16,12 @@ module Hive
     
     def test_get_dynamic_global_properties
       @api.get_dynamic_global_properties do |properties|
-        assert '0.000 TBD', properties.confidential_sbd_supply
+        assert '0.000 TBD', properties.confidential_hbd_supply
         assert '0.000 TESTS', properties.confidential_supply
-        assert '0.000 TBD', properties.current_sbd_supply
+        assert '0.000 TBD', properties.current_hbd_supply
         assert '0.000000 VESTS', properties.pending_rewarded_vesting_shares
-        assert '0.000 TESTS', properties.pending_rewarded_vesting_steem
-        assert '0.000 TESTS', properties.total_reward_fund_steem
+        assert '0.000 TESTS', properties.pending_rewarded_vesting_hive
+        assert '0.000 TESTS', properties.total_reward_fund_hive
       end
     end
   end

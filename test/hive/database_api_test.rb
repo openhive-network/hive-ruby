@@ -14,7 +14,7 @@ module Hive
     end
     
     def test_inspect
-      assert_equal "#<DatabaseApi [@chain=hive, @methods=<50 elements>]>", @api.inspect
+      assert_equal "#<DatabaseApi [@chain=hive, @methods=<51 elements>]>", @api.inspect
     end
     
     def test_method_missing
@@ -101,9 +101,9 @@ module Hive
       end
     end
     
-    def test_find_sbd_conversion_requests
-      vcr_cassette('database_api_find_sbd_conversion_requests', record: :once) do
-        @api.find_sbd_conversion_requests(account: 'hiveio') do |result|
+    def test_find_hbd_conversion_requests
+      vcr_cassette('database_api_find_hbd_conversion_requests', record: :once) do
+        @api.find_hbd_conversion_requests(account: 'hiveio') do |result|
           assert_equal Hashie::Array, result.requests.class
         end
       end
@@ -456,8 +456,8 @@ module Hive
       end
     end
     
-    def test_list_sbd_conversion_requests
-      vcr_cassette('database_api_list_sbd_conversion_requests', record: :once) do
+    def test_list_hbd_conversion_requests
+      vcr_cassette('database_api_list_hbd_conversion_requests', record: :once) do
         # Other order types are listed here:
         # https://github.com/openhive-network/hive/blob/1cfdf8101ec415156b155c9ec90b0a4d439a039f/libraries/plugins/apis/database_api/database_api.cpp#L814
         options = {
@@ -466,7 +466,7 @@ module Hive
           order: 'by_conversion_date'
         }
         
-        @api.list_sbd_conversion_requests(options) do |result|
+        @api.list_hbd_conversion_requests(options) do |result|
           assert_equal Hashie::Array, result.requests.class
         end
       end
@@ -627,7 +627,7 @@ module Hive
           assert_raises NoMethodError do
             @api.get_version
           end
-        when '0.20.0', '0.23.0'
+        when '0.20.0', '0.23.0', '1.24.0'
           @api.get_version do |version|
             assert version.chain_id
           end
