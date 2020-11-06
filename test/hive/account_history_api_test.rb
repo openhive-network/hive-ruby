@@ -43,6 +43,40 @@ module Hive
       end
     end
     
+    def test_get_account_history_with_op_mask
+      vcr_cassette('account_history_api_get_account_history_with_op_mask', record: :once) do
+        # We're looking specifically for comment_operation, therefore, for the
+        # first 64 operation types (as defined in protocol/operations.hpp), we set
+        # the corresponding bit in operation_filter_low; for the higher-numbered
+        # operations, set the bit in operation_filter_high (pretending
+        # operation_filter is a 128-bit bitmask composed of
+        # {operation_filter_high, operation_filter_low})
+        # 
+        # Note, we don't really use the operation_filter_high because
+        # comment_operation is the second flag.  In fact, operation_filter_high
+        # could even be nil, if we wanted.
+        # 
+        # https://gitlab.syncad.com/hive/hive/-/blob/master/libraries/protocol/include/hive/protocol/operations.hpp
+        
+        operation_mask = 0x02 # comment_operation
+        operation_filter_low = operation_mask & 0xFFFFFFFF
+        operation_filter_high = (operation_mask & 0xFFFFFFFF00000000) >> 32
+
+        options = {
+          account: 'hiveio',
+          start: 0,
+          limit: 0,
+          include_reversible: true,
+          operation_filter_low: operation_filter_low,
+          operation_filter_high: operation_filter_high
+        }
+        
+        @api.get_account_history(options) do |result|
+          assert_equal Hashie::Array, result.history.class
+        end
+      end
+    end
+    
     def test_get_ops_in_block
       vcr_cassette('account_history_api_get_ops_in_block', record: :once) do
         options = {
