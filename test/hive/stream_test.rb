@@ -19,8 +19,8 @@ module Hive
     
       vcr_cassette('block_headers') do
         @stream.block_headers(options) do |block_header, block_num|
-          assert block_header
-          assert block_num
+          assert block_header, "expect block_header for block_num: #{block_num}"
+          assert block_num, "expect block_num for block_header: #{block_header}"
         end
       end
     end
@@ -33,8 +33,8 @@ module Hive
       
       vcr_cassette('block_headers_mode_head') do
         stream.block_headers(options) do |block_header, block_num|
-          assert block_header
-          assert block_num
+          assert block_header, "expect block_header for block_num: #{block_num}"
+          assert block_num, "expect block_num for block_header: #{block_header}"
         end
       end
     end
@@ -158,6 +158,7 @@ module Hive
     end
     
     def test_only_virtual_operations
+      vops_found = false
       options = {
         until_block_num: @last_irreversible_block_num + 1,
         only_virtual: true
@@ -165,12 +166,36 @@ module Hive
       
       vcr_cassette('only_virtual_operations') do
         @stream.operations(options) do |vop, trx_id, block_num|
+          vops_found = true
           assert vop
           assert trx_id
-          assert_equal trx_id, Stream::VOP_TRX_ID
           assert block_num
+          assert Operation::VIRTUAL_OP_IDS.include?(vop.type.to_sym), "did not expect #{vop.type.to_sym}"
         end
       end
+      
+      skip 'no vops found' unless vops_found
+    end
+    
+    def test_only_virtual_operations_mode_head
+      vops_found = false
+      stream = Hive::Stream.new(url: TEST_NODE, mode: :head)
+      options = {
+        until_block_num: @last_irreversible_block_num + 1,
+        only_virtual: true
+      }
+      
+      vcr_cassette('only_virtual_operations_mode_head') do
+        stream.operations(options) do |vop, trx_id, block_num|
+          vops_found = true
+          assert vop
+          assert trx_id
+          assert block_num
+          assert Operation::VIRTUAL_OP_IDS.include?(vop.type.to_sym), "did not expect #{vop.type.to_sym}"
+        end
+      end
+      
+      skip 'no vops found' unless vops_found
     end
     
     def test_only_author_reward_operations
@@ -184,10 +209,9 @@ module Hive
       vcr_cassette('only_author_reward_operations') do
         @stream.operations(options) do |vop, trx_id, block_num|
           assert vop
-          assert_equal vop.type, 'author_reward_operation'
           assert trx_id
-          assert_equal trx_id, Stream::VOP_TRX_ID
           assert block_num
+          assert_equal vop.type, 'author_reward_operation'
         end
       end
     end

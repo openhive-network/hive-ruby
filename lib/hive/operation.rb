@@ -5,7 +5,7 @@ module Hive
     include Utils
     
     # IDs derrived from:
-    # https://gitlab.syncad.com/hive/hive/-/blob/master/libraries/protocol/include/steem/protocol/operations.hpp
+    # https://gitlab.syncad.com/hive/hive/-/blob/master/libraries/protocol/include/hive/protocol/operations.hpp
     
     IDS = [
       :vote_operation,
@@ -64,18 +64,18 @@ module Hive
       :create_proposal_operation,
       :update_proposal_votes_operation,
       :remove_proposal_operation,
+      :update_proposal_operation,
       
       # SMT operations
       :claim_reward_balance2_operation,
       
       :smt_setup_operation,
-      :smt_cap_reveal_operation,
-      :smt_refund_operation,
       :smt_setup_emissions_operation,
       :smt_set_setup_parameters_operation,
       :smt_set_runtime_parameters_operation,
       :smt_create_operation,
-      
+      :smt_contribute_operation
+    ] + VIRTUAL_OP_IDS = [
       # virtual operations below this point
       :fill_convert_request_operation,
       :author_reward_operation,
@@ -92,7 +92,16 @@ module Hive
       :return_vesting_delegation_operation,
       :comment_benefactor_reward_operation,
       :producer_reward_operation,
-      :clear_null_account_balance_operation
+      :clear_null_account_balance_operation,
+      :proposal_pay_operation,
+      :sps_fund_operation,
+      :hardfork_hive_operation,
+      :hardfork_hive_restore_operation,
+      :delayed_voting_operation,
+      :consolidate_treasury_balance_operation,
+      :effective_comment_vote_operation,
+      :ineffective_delete_comment_operation,
+      :sps_convert_operation
     ]
     
     def self.op_id(op)

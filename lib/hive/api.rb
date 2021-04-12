@@ -193,7 +193,18 @@ module Hive
           # Some argument are optional, but if the arguments passed are greater
           # than the expected arguments size, we can warn.
           if args_size > expected_args_size
-            @error_pipe.puts "Warning #{rpc_method_name} expects arguments: #{expected_args_size}, got: #{args_size}"
+            if rpc_method_name == 'account_history_api.get_account_history' && expected_args_size == 3 && args_size == 6
+              # TODO Remove this condition if they ever fix this issue:
+              # https://gitlab.syncad.com/hive/hive/-/issues/100
+            elsif rpc_method_name == 'account_history_api.get_ops_in_block' && expected_args_size == 2 && args_size == 3
+              # TODO Remove this condition if they ever fix this issue:
+              # https://gitlab.syncad.com/hive/hive/-/issues/100
+            elsif rpc_method_name == 'account_history_api.enum_virtual_ops' && expected_args_size == 2 && args_size == 3
+              # TODO Remove this condition if they ever fix this issue:
+              # https://gitlab.syncad.com/hive/hive/-/issues/100
+            else
+              @error_pipe.puts "Warning #{rpc_method_name} expects arguments: #{expected_args_size}, got: #{args_size}"
+            end
           end
         rescue NoMethodError => e
           error = Hive::ArgumentError.new("#{rpc_method_name} expects arguments: #{expected_args_size}", e)

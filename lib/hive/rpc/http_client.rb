@@ -62,12 +62,13 @@ module Hive
         response = nil
         
         loop do
+          sub_options = options.dup
           request = http_post(api_name)
           
           request_object = if !!api_name && !!api_method
-            put(api_name, api_method, options)
-          elsif !!options && defined?(options.delete)
-            options.delete(:request_object)
+            put(api_name, api_method, sub_options)
+          elsif !!options && defined?(sub_options.delete)
+            sub_options.delete(:request_object)
           end
           
           if request_object.size > JSON_RPC_BATCH_SIZE_MAXIMUM
@@ -124,7 +125,7 @@ module Hive
                     raise_error_response rpc_method_name, rpc_args, r
                   rescue *TIMEOUT_ERRORS => e
                     timeout_detected = true
-                    timeout_cause = nil
+                    timeout_cause = JSON[e.message]['error'] + " while posting: #{rpc_args}" rescue e.to_s
                     
                     break # fail fast
                   end

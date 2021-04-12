@@ -153,9 +153,13 @@ namespace :stream do
     first_block_num = args[:at_block_num].to_i if !!args[:at_block_num]
     stream = Hive::Stream.new(url: ENV['TEST_NODE'], mode: mode)
     api = Hive::Api.new(url: ENV['TEST_NODE'])
+    block_api = Hive::BlockApi.new(url: ENV['TEST_NODE'])
     last_block_num = nil
     last_timestamp = nil
     range_complete = false
+    round_pool = {}
+    aging_blocks = {}
+    aged_block_interval = 630
     
     api.get_dynamic_global_properties do |properties|
       current_block_num = if mode == :head
@@ -165,13 +169,14 @@ namespace :stream do
       end
       
       # First pass replays latest a random number of blocks to test chunking.
-      first_block_num ||= current_block_num - (rand * 200).to_i
+      first_block_num ||= current_block_num - (rand * 2000).to_i
       
       range = first_block_num..current_block_num
       puts "Initial block range: #{range.size}"
       
       stream.blocks(at_block_num: range.first) do |block, block_num|
         current_timestamp = Time.parse(block.timestamp + 'Z')
+        round_pool[current_timestamp] = {block_num: block_num, block: block}
         
         if !range_complete && block_num > range.last
           puts 'Done with initial range.'
@@ -188,9 +193,35 @@ namespace :stream do
           exit
         end
         
-        puts "\t#{block_num} Timestamp: #{current_timestamp}, witness: #{block.witness}"
+        round_pool.each do |k, v|
+          aging_blocks[k] = v if Time.now - k > aged_block_interval
+        end
+        
+        round_pool = round_pool.select{|k, v| Time.now - k <= aged_block_interval}.to_h
+        drift = last_timestamp.nil? ? 0 : (current_timestamp - last_timestamp) - Hive::Stream::BLOCK_INTERVAL.to_f
+        
+        puts "\t#{block_num} Timestamp: #{current_timestamp}, witness: #{block.witness}, aging blocks: #{aging_blocks.size}, drift: #{drift}"
+        
         last_block_num = block_num
         last_timestamp = current_timestamp
+        
+        if range_complete && aging_blocks.any?
+          aging_block_nums = aging_blocks.map{|k, v| v[:block_num]}
+          wire_block_range = (aging_block_nums.first..aging_block_nums.last)
+          
+          block_api.get_block_headers(block_range: wire_block_range) do |wire_header, wire_block_num|
+            wire_timestamp = Time.parse(wire_header.timestamp + 'Z')
+            aging_block = aging_blocks[wire_timestamp][:block]
+            
+            if wire_header.previous == aging_block.previous
+              puts "\t\tAged block test #{wire_block_num}: √"
+              aging_blocks.delete(wire_timestamp)
+            else
+              puts "\t\tAged block test #{wire_block_num}: detected block-reorganization (#{wire_header.previous} != #{aging_block.previous})"
+              exit
+            end
+          end
+        end
       end
     end
   end
@@ -247,6 +278,8 @@ namespace :stream do
     first_block_num = args[:at_block_num].to_i if !!args[:at_block_num]
     stream = Hive::Stream.new(url: ENV['TEST_NODE'], mode: mode)
     api = Hive::Api.new(url: ENV['TEST_NODE'])
+    ah_api = Hive::AccountHistoryApi.new(url: ENV['TEST_NODE'])
+    round_vops = {}
     
     api.get_dynamic_global_properties do |properties|
       current_block_num = if mode == :head
@@ -259,6 +292,31 @@ namespace :stream do
       first_block_num ||= current_block_num - (rand * 200).to_i
       
       stream.operations(at_block_num: first_block_num, only_virtual: true) do |op, trx_id, block_num|
+        # 126 is about two shuffle rounds (if mode == :head), we need to avoid
+        # the current block_num because we're still in the middle of reading
+        # all of the vops for that block.
+        if round_vops.size > 126 && !round_vops.include?(block_num)
+          ah_api.enum_virtual_ops(block_range_begin: round_vops.keys.min, block_range_end: round_vops.keys.max + 1, include_reversible: true) do |result|
+            round_vops.each do |k, v|
+              later_ops = result.ops.select{|vop| vop.block == k}
+              if (verify_count = later_ops.size) == v.size
+                puts "\t\t#{k} :: streamed vop count was #{v.size} √"
+              else
+                puts "\t\t#{k} :: streamed vop count was #{v.size}, later became #{verify_count}"
+                puts "\t\t\t#{v.map{|op| op.type}.join(', ')}"
+                puts "\t\tLater ops:\n\t\t\t#{later_ops.map{|vop| vop.op.type}.join(', ')}"
+                
+                exit
+              end
+            end
+          end
+          
+          round_vops = {}
+        end
+        
+        round_vops[block_num] ||= []
+        round_vops[block_num] << op
+        
         puts "#{block_num} :: #{trx_id}; op: #{op.type}"
       end
     end
