@@ -35,7 +35,9 @@ module Hive
     MAX_RETRY_COUNT = 10
     
     VOP_TRX_ID = ('0' * 40).freeze
-
+    MAX_VOP_READ_AHEAD = 100
+    SHUFFLE_ROUND_LENGTH = 21
+    
     # @param options [Hash] additional options
     # @option options [Hive::DatabaseApi] :database_api
     # @option options [Hive::BlockApi] :block_api
@@ -92,7 +94,7 @@ module Hive
     def transactions(options = {}, &block)
       blocks(options) do |block, block_num|
         if block.nil?
-          warn "Batch missing block_num: #{block_num}, retrying ..."
+          warn "Batch missing block_num: #{block_num}, retrying ..." unless @no_warn
           
           block = block_api.get_block(block_num: block_num) do |result|
             result.block
@@ -214,6 +216,10 @@ module Hive
       only_virtual = false
       include_virtual = false
       last_block_num = nil
+      within_shuffle_round = nil
+      initial_head_block_number = database_api.get_dynamic_global_properties do |dgpo|
+        dgpo.head_block_number
+      end
       
       case args.first
       when Hash
@@ -226,7 +232,9 @@ module Hive
       
       if only_virtual
         block_numbers(options) do |block_num|
-          get_virtual_ops(types, block_num, block)
+          within_shuffle_round ||= initial_head_block_number - block_num < SHUFFLE_ROUND_LENGTH * 2
+
+          get_virtual_ops(types, block_num, within_shuffle_round, block)
         end
       else
         transactions(options) do |transaction, trx_id, block_num|
@@ -236,8 +244,9 @@ module Hive
             next unless last_block_num != block_num
             
             last_block_num = block_num
+            within_shuffle_round ||= initial_head_block_number - block_num < SHUFFLE_ROUND_LENGTH * 2
             
-            get_virtual_ops(types, block_num, block) if include_virtual
+            get_virtual_ops(types, block_num, within_shuffle_round, block) if include_virtual
           end
         end
       end
@@ -257,6 +266,7 @@ module Hive
       object = options[:object]
       object_method = "get_#{object}".to_sym
       block_interval = BLOCK_INTERVAL
+      use_block_range = true
       
       at_block_num, until_block_num = if !!block_range = options[:block_range]
         [block_range.first, block_range.last]
@@ -281,9 +291,32 @@ module Hive
                 block_interval = BLOCK_INTERVAL
               end
             else
-              block_api.send(object_method, block_range: range) do |b, n|
-                block.call b, n
-                block_interval = BLOCK_INTERVAL
+              loop do
+                begin
+                  if use_block_range
+                    block_api.send(object_method, block_range: range) do |b, n|
+                      block.call b, n
+                      block_interval = BLOCK_INTERVAL
+                    end
+                  else
+                    range.each do |block_num|
+                      block_api.get_block(block_num: block_num) do |b, n|
+                        block.call b.block, b.block.block_id[0..7].to_i(16)
+                        block_interval = BLOCK_INTERVAL
+                      end
+                    end
+                  end
+                rescue Hive::UnknownError => e
+                  if e.message =~ /Could not find method get_block_range/
+                    use_block_range = false
+                    
+                    redo
+                  end
+                  
+                  raise e
+                end
+                
+                break
               end
             end
             
@@ -325,21 +358,95 @@ module Hive
     end
     
     # @private
-    def get_virtual_ops(types, block_num, block)
+    def get_virtual_ops(types, block_num, within_shuffle_round, block)
       retries = 0
-      
-      loop do
-        get_ops_in_block_options = case account_history_api
-        when Hive::CondenserApi
-          [block_num, true]
-        when Hive::AccountHistoryApi
-          {
-            block_num: block_num,
-            only_virtual: true
-          }
+      vop_read_ahead = within_shuffle_round ? 1 : MAX_VOP_READ_AHEAD
+
+      @virtual_ops_cache ||= {}
+      @virtual_ops_cache = @virtual_ops_cache.reject do |k, v|
+        if k < block_num
+          warn "Found orphaned virtual operations for block_num #{k}: #{v.to_json}" unless @no_warn
+          
+          true
         end
         
-        response = account_history_api.get_ops_in_block(*get_ops_in_block_options)
+        false
+      end
+      
+      loop do
+        vops_found = false
+        
+        if account_history_api.class == Hive::AccountHistoryApi || @enum_virtual_ops_supported.nil? && @enum_virtual_ops_supported != false
+          begin
+            # Use account_history_api.enum_virtual_ops, if supported.
+            
+            if @virtual_ops_cache.empty? || !@virtual_ops_cache.keys.include?(block_num)
+              (block_num..(block_num + vop_read_ahead)).each do |block_num|
+                @virtual_ops_cache[block_num] = []
+              end
+              
+              enum_virtual_ops_options = {
+                block_range_begin: block_num,
+                block_range_end: block_num + vop_read_ahead,
+                # TODO Use: mode != :irreversible
+                include_reversible: true
+              }
+              
+              account_history_api.enum_virtual_ops(enum_virtual_ops_options) do |result|
+                @enum_virtual_ops_supported = true
+                
+                result.ops.each do |vop|
+                  @virtual_ops_cache[vop.block] << vop
+                end
+              end
+            end
+            
+            vops_found = true
+            
+            if !!@virtual_ops_cache[block_num]
+              @virtual_ops_cache[block_num].each do |vop|
+                next unless block_num == vop.block
+                next if types.any? && !types.include?(vop.op.type)
+                
+                if vop.virtual_op == 0
+                  # require 'pry' ; binding.pry if vop.op.type == 'producer_reward_operation'
+                  warn "Found non-virtual operation (#{vop.op.type}) in enum_virtual_ops result for block: #{block_num}" unless @no_warn
+                  
+                  next
+                end
+                
+                block.call vop.op, vop.trx_id, block_num
+              end
+              
+              @virtual_ops_cache.delete(block_num)
+            end
+          rescue Hive::UnknownError => e
+            if e.message =~ /This API is not supported for account history backed by Chainbase/
+              warn "Retrying with get_ops_in_block (api does not support enum_virtual_ops)" unless @no_warn
+              @enum_virtual_ops_supported = false
+              vops_found = false
+            else
+              raise e
+            end
+          end
+        end
+        
+        break if vops_found
+        
+        # Fallback to previous method.
+        warn "Retrying with get_ops_in_block (did not find ops for block #{block_num} using enum_virtual_ops)" unless @no_warn
+        
+        response = case account_history_api
+        when Hive::CondenserApi
+          account_history_api.get_ops_in_block(block_num, true)
+        when Hive::AccountHistoryApi
+          account_history_api.get_ops_in_block(
+            block_num: block_num,
+            only_virtual: true,
+            # TODO Use: mode != :irreversible
+            include_reversible: true
+          )
+        end
         
         if response.nil? || (result = response.result).nil?
           if retries < MAX_RETRY_COUNT
@@ -367,7 +474,7 @@ module Hive
             retries = retries + 1
             redo
           else
-            warn "unable to find virtual operations for block: #{block_num}"
+            warn "unable to find virtual operations for block: #{block_num}" unless @no_warn
             # raise TooManyRetriesError, "unable to find virtual operations for block: #{block_num}"
           end
         end
@@ -375,7 +482,7 @@ module Hive
         ops.each do |op|
           next if types.any? && !types.include?(op.type)
           
-          block.call op, VOP_TRX_ID, block_num
+          block.call op, vop.trx_id, block_num
         end
         
         break

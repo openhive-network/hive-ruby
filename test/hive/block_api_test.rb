@@ -10,9 +10,45 @@ module Hive
     
     def test_get_blocks
       vcr_cassette('block_api_get_blocks', record: :once) do
-        @block_api.get_blocks(block_range: 9001..9010) do |blocks|
-          assert_equal Hashie::Mash, blocks.class
+        loop = 0
+        @block_api.get_blocks(block_range: 9001..9010) do |block|
+          assert_equal Hashie::Mash, block.class
+          loop += 1
         end
+        assert_equal 10, loop
+      end
+    end
+    
+    def test_get_blocks_large
+      vcr_cassette('block_api_get_blocks_large', record: :once) do
+        loop = 0
+        @block_api.get_blocks(block_range: 1..2000) do |block|
+          assert_equal Hashie::Mash, block.class
+          loop += 1
+        end
+        
+        assert_equal 2000, loop
+      end
+    end
+    
+    def test_get_blocks_zero
+      vcr_cassette('block_api_get_blocks_zero', record: :once) do
+        @block_api.get_blocks(block_range: []) do |block|
+          fail 'Did not expect blocks'
+        end
+      end
+      
+      assert true
+    end
+    
+    def test_get_blocks_use_batch
+      vcr_cassette('block_api_get_blocks_use_batch', record: :once) do
+        loop = 0
+        @block_api.get_blocks(block_range: 9001..9010, use_batch: true) do |block|
+          assert_equal Hashie::Mash, block.class
+          loop += 1
+        end
+        assert_equal 10, loop
       end
     end
     
@@ -73,6 +109,40 @@ module Hive
           # :nocov:
         rescue UnknownError => e
           assert e.to_s, 'expect string from unknown error'
+        end
+      end
+    end
+    
+    def test_get_block_range
+      vcr_cassette('block_api_get_block_range', record: :once) do
+        block_num = 52802399
+        
+        @block_api.get_block_range(starting_block_num: block_num, count: 10) do |result|
+          blocks = result.blocks.each do |b|
+            decoded_previous_block_num = b.previous[0..7].to_i(16)
+            previous_block_num = block_num - 1
+            
+            assert_equal decoded_previous_block_num, previous_block_num, "Wrong block_num.  Got #{decoded_previous_block_num} (#{b.previous}), expected #{previous_block_num}"
+            
+            block_num = block_num + 1
+          end
+        end
+      end
+    end
+    
+    def test_get_block_range_from_first
+      vcr_cassette('block_api_get_block_range_from_first', record: :once) do
+        block_num = 1
+        
+        @block_api.get_block_range(starting_block_num: block_num, count: 10) do |result|
+          blocks = result.blocks.each do |b|
+            decoded_previous_block_num = b.previous[0..7].to_i(16)
+            previous_block_num = block_num - 1
+            
+            assert_equal decoded_previous_block_num, previous_block_num, "Wrong block_num.  Got #{decoded_previous_block_num} (#{b.previous}), expected #{previous_block_num}"
+            
+            block_num = block_num + 1
+          end
         end
       end
     end
