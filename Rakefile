@@ -344,6 +344,78 @@ namespace :stream do
       end
     end
   end
+  
+  desc 'Test the ability to stream all operations (including virtual) that match a pattern.'
+  task :op_pattern, [:pattern, :mode, :at_block_num] do |t, args|
+    mode = (args[:mode] || 'irreversible').to_sym
+    first_block_num = args[:at_block_num].to_i if !!args[:at_block_num]
+    stream = Hive::Stream.new(url: ENV['TEST_NODE'], mode: mode)
+    api = Hive::Api.new(url: ENV['TEST_NODE'])
+    pattern = /#{args[:pattern]}/i
+    
+    api.get_dynamic_global_properties do |properties|
+      current_block_num = if mode == :head
+        properties.head_block_number
+      else
+        properties.last_irreversible_block_num
+      end
+      
+      # First pass replays latest a random number of blocks to test chunking.
+      first_block_num ||= current_block_num - (rand * 200).to_i
+      
+      stream.operations(at_block_num: first_block_num, include_virtual: true) do |op, trx_id, block_num|
+        next unless op.to_json =~ pattern
+        
+        puts "#{block_num} :: #{trx_id}; op: #{op.to_json}"
+      end
+    end
+  end
+  
+  desc 'Test the ability to stream all effective_comment_vote_operation operations.'
+  task :effective_comment_vote_operation, [:mode, :at_block_num] do |t, args|
+    mode = (args[:mode] || 'irreversible').to_sym
+    first_block_num = args[:at_block_num].to_i if !!args[:at_block_num]
+    stream = Hive::Stream.new(url: ENV['TEST_NODE'], mode: mode, no_warn: true)
+    api = Hive::Api.new(url: ENV['TEST_NODE'])
+    
+    api.get_dynamic_global_properties do |properties|
+      current_block_num = if mode == :head
+        properties.head_block_number
+      else
+        properties.last_irreversible_block_num
+      end
+      
+      # First pass replays latest a random number of blocks to test chunking.
+      first_block_num ||= current_block_num - (rand * 200).to_i
+      
+      stream.operations(at_block_num: first_block_num, include_virtual: true) do |op, trx_id, block_num|
+        next unless op.type == 'effective_comment_vote_operation'
+        pending_payout = Hive::Type::Amount.new(op.value.pending_payout)
+        
+        puts "#{block_num} :: #{trx_id}; voter: #{op.value.voter}, author: #{op.value.author}, pending_payout: #{pending_payout}"
+      end
+    end
+  end
+end
+
+desc 'List hardforks.'
+task :hardforks do
+  database_api = Hive::DatabaseApi.new(url: ENV['TEST_NODE'])
+  block_api = Hive::BlockApi.new(url: ENV['TEST_NODE'])
+  ah_api = Hive::AccountHistoryApi.new(url: ENV['TEST_NODE'])
+  last_hf_timestamp = block_api.get_block(block_num: 1) do |result|
+    Time.parse(result.block.timestamp + 'Z')
+  end
+  
+  database_api.get_hardfork_properties do |properties|
+    processed_hardforks = properties.processed_hardforks
+    
+    processed_hardforks.each_with_index do |timestamp, index|
+      timestamp = Time.parse(timestamp + 'Z')
+      
+      puts "HF#{index}: #{timestamp}"
+    end
+  end
 end
 
 YARD::Rake::YardocTask.new do |t|
