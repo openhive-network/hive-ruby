@@ -119,7 +119,10 @@ module Hive
             "verify_authority",
             "find_proposals",
             "list_proposal_votes",
-            "list_proposals"
+            "list_proposals",
+            "find_recurrent_transfers",
+            "get_collateralized_conversion_requests",
+            "is_known_transaction"
           ],
           database_api: [
             "find_account_recovery_requests",
@@ -172,7 +175,11 @@ module Hive
             "list_proposals",
             "find_hbd_conversion_requests",
             "get_comment_pending_payouts",
-            "list_hbd_conversion_requests"
+            "list_hbd_conversion_requests",
+            "find_collateralized_conversion_requests",
+            "find_recurrent_transfers",
+            "is_known_transaction",
+            "list_collateralized_conversion_requests"
           ],
           # follow_api: [
           #   "get_account_reputations",

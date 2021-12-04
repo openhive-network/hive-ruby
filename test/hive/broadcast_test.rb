@@ -302,7 +302,32 @@ module Hive
         force_serialize: @force_serialize
       }
       
-      vcr_cassette('broadcast_comment_with_options') do
+      vcr_cassette('broadcast_comment_with_options_social') do
+        assert Broadcast.comment(@broadcast_options.merge(options))
+      end
+    end
+    
+    def test_comment_with_options_no_authority
+      options = {
+        params: {
+          author: 'alice',
+          permlink: 'permlink',
+          parent_permlink: 'parent_permlink',
+          title: 'title',
+          body: 'body',
+          max_accepted_payout: "0.000 #{@debt_symbol}",
+          # allow_replies: false,
+          allow_votes: false,
+          allow_curation_rewards: false,
+          beneficiaries: [
+            {'alice': 1000},
+            {'bob': 1000}
+          ]
+        },
+        force_serialize: @force_serialize
+      }
+      
+      vcr_cassette('broadcast_comment_with_options_no_authority') do
         assert_raises MissingPostingAuthorityError do
           Broadcast.comment(@broadcast_options.merge(options))
         end
