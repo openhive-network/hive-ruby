@@ -14,7 +14,7 @@ module Hive
     end
     
     def test_inspect
-      assert_equal "#<DatabaseApi [@chain=hive, @methods=<51 elements>]>", @api.inspect
+      assert_equal "#<DatabaseApi [@chain=hive, @methods=<55 elements>]>", @api.inspect
     end
     
     def test_method_missing
@@ -627,7 +627,7 @@ module Hive
           assert_raises NoMethodError do
             @api.get_version
           end
-        when '0.20.0', '0.23.0', '1.24.0'
+        when '0.20.0', '0.23.0', '1.24.0', '1.25.0'
           @api.get_version do |version|
             assert version.chain_id
           end

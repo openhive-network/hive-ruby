@@ -80,7 +80,7 @@ module Hive
     end
     
     def test_inspect
-      assert_equal "#<CondenserApi [@chain=hive, @methods=<87 elements>]>", @api.inspect
+      assert_equal "#<CondenserApi [@chain=hive, @methods=<90 elements>]>", @api.inspect
     end
     
     def test_inspect_testnet
