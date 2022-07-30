@@ -84,7 +84,7 @@ module Hive
     super unless const.to_s.end_with? 'Api'
     
     api = api_classes[const]
-    api ||= Api.clone(freeze: true) rescue Api.clone
+    api ||= Api.clone(freeze: false) rescue Api.clone
     api.api_name = const
     api_classes[const] = api
   end
