@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'yard', '~> 0.9', '>= 0.9.12'
   spec.add_development_dependency 'pry', '~> 0.11', '>= 0.11.3'
   spec.add_development_dependency 'awesome_print', '~> 1.8', '>= 1.8.0'
-  spec.add_development_dependency 'irb', '~> 1.2', '>= 1.2.3'
+  spec.add_development_dependency 'irb', '~> 1.4', '>= 1.4.2'
   
   spec.add_dependency 'json', '~> 2.1', '>= 2.1.0'
   spec.add_dependency 'logging', '~> 2.2', '>= 2.2.0'
