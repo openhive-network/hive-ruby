@@ -627,7 +627,7 @@ module Hive
           assert_raises NoMethodError do
             @api.get_version
           end
-        when '0.20.0', '0.23.0', '1.24.0', '1.25.0'
+        when '0.20.0', '0.23.0', '1.24.0', '1.25.0', '1.27.0'
           @api.get_version do |version|
             assert version.chain_id
           end

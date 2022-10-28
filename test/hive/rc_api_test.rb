@@ -13,7 +13,7 @@ module Hive
     end
     
     def test_inspect
-      assert_equal "#<RcApi [@chain=hive, @methods=<3 elements>]>", @api.inspect
+      assert_equal "#<RcApi [@chain=hive, @methods=<5 elements>]>", @api.inspect
     end
     
     def test_method_missing
