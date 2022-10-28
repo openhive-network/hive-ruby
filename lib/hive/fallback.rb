@@ -8,7 +8,6 @@ module Hive::Fallback
       :get_block_header
     ],
     condenser_api: [
-      :broadcast_block,
       :broadcast_transaction,
       :broadcast_transaction_synchronous,
       :get_account_count,
@@ -172,7 +171,6 @@ module Hive::Fallback
       :get_volume
     ],
     network_broadcast_api: [
-      :broadcast_block,
       :broadcast_transaction
     ],
     rc_api: [
