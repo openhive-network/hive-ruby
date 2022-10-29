@@ -80,13 +80,13 @@ module Hive
     end
     
     def test_inspect
-      assert_equal "#<CondenserApi [@chain=hive, @methods=<90 elements>]>", @api.inspect
+      assert_equal "#<CondenserApi [@chain=hive, @methods=<92 elements>]>", @api.inspect
     end
     
     def test_inspect_testnet
       vcr_cassette("#{@api.class.api_name}_testnet") do
         api = Api.new(chain: :test) rescue skip('testnet currently unavilable')
-        assert_equal "#<CondenserApi [@chain=test, @methods=<87 elements>]>", api.inspect
+        assert_equal "#<CondenserApi [@chain=test, @methods=<86 elements>]>", api.inspect
       end
     end
     
@@ -114,12 +114,8 @@ module Hive
       vcr_cassette("#{@api.class.api_name}_all_methods") do
         @methods.each do |key|
           case key
-          when :broadcast_block then
-            assert_raises BlockTooOldError, "expect void arguments to raise BlockTooOldError for: #{key}" do
-              assert @api.send key, {}
-            end
           when :broadcast_transaction then
-            assert_raises EmptyTransactionError, "expect void arguments to raise EmptyTransactionError for: #{key}" do
+            assert_raises TransactionExpiredError, "expect void arguments to raise TransactionExpiredError for: #{key}" do
               assert @api.send key, {
                 ref_block_num: 0,
                 ref_block_prefix: 0,
@@ -130,7 +126,7 @@ module Hive
               }
             end
           when :broadcast_transaction_synchronous then
-            assert_raises EmptyTransactionError, "expect void arguments to raise EmptyTransactionError for: #{key}" do
+            assert_raises TransactionExpiredError, "expect void arguments to raise TransactionExpiredError for: #{key}" do
               assert @api.send key, {
                 ref_block_num: 0,
                 ref_block_prefix: 0,

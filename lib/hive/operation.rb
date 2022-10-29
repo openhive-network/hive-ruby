@@ -10,30 +10,30 @@ module Hive
     IDS = [
       :vote_operation,
       :comment_operation,
-      
+
       :transfer_operation,
       :transfer_to_vesting_operation,
       :withdraw_vesting_operation,
-      
+
       :limit_order_create_operation,
       :limit_order_cancel_operation,
-      
+
       :feed_publish_operation,
       :convert_operation,
-      
+
       :account_create_operation,
       :account_update_operation,
-      
+
       :witness_update_operation,
       :account_witness_vote_operation,
       :account_witness_proxy_operation,
-      
+
       :pow_operation,
-      
+
       :custom_operation,
-      
-      :report_over_production_operation,
-      
+
+      :witness_block_approve_operation,
+
       :delete_comment_operation,
       :custom_json_operation,
       :comment_options_operation,
@@ -65,16 +65,18 @@ module Hive
       :update_proposal_votes_operation,
       :remove_proposal_operation,
       :update_proposal_operation,
+      :collateralized_convert_operation,
+      :recurrent_transfer_operation,
       
       # SMT operations
       :claim_reward_balance2_operation,
-      
+
       :smt_setup_operation,
       :smt_setup_emissions_operation,
       :smt_set_setup_parameters_operation,
       :smt_set_runtime_parameters_operation,
       :smt_create_operation,
-      :smt_contribute_operation
+      :smt_contribute_operation,
     ] + VIRTUAL_OP_IDS = [
       # virtual operations below this point
       :fill_convert_request_operation,
@@ -94,14 +96,30 @@ module Hive
       :producer_reward_operation,
       :clear_null_account_balance_operation,
       :proposal_pay_operation,
-      :sps_fund_operation,
+      :dhf_funding_operation,
       :hardfork_hive_operation,
       :hardfork_hive_restore_operation,
       :delayed_voting_operation,
       :consolidate_treasury_balance_operation,
       :effective_comment_vote_operation,
       :ineffective_delete_comment_operation,
-      :sps_convert_operation
+      :dhf_conversion_operation,
+      :expired_account_notification_operation,
+      :changed_recovery_account_operation,
+      :transfer_to_vesting_completed_operation,
+      :pow_reward_operation,
+      :vesting_shares_split_operation,
+      :account_created_operation,
+      :fill_collateralized_convert_request_operation,
+      :system_warning_operation,
+      :fill_recurrent_transfer_operation,
+      :failed_recurrent_transfer_operation,
+      :limit_order_cancelled_operation,
+      :producer_missed_operation,
+      :proposal_fee_operation,
+      :collateralized_convert_immediate_conversion_operation,
+      :escrow_approved_operation,
+      :escrow_rejected_operation
     ]
     
     def self.op_id(op)

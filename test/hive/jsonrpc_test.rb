@@ -33,7 +33,6 @@ module Hive
             "get_block_header"
           ],
           condenser_api: [
-            "broadcast_block",
             "broadcast_transaction",
             "broadcast_transaction_synchronous",
             "get_account_count",
@@ -122,7 +121,10 @@ module Hive
             "list_proposals",
             "find_recurrent_transfers",
             "get_collateralized_conversion_requests",
-            "is_known_transaction"
+            "is_known_transaction",
+            "find_rc_accounts",
+            "list_rc_accounts",
+            "list_rc_direct_delegations"
           ],
           database_api: [
             "find_account_recovery_requests",
@@ -207,13 +209,14 @@ module Hive
             "get_volume"
           ],
           network_broadcast_api: [
-            "broadcast_block",
             "broadcast_transaction"
           ],
           rc_api: [
             "find_rc_accounts",
             "get_resource_params",
-            "get_resource_pool"
+            "get_resource_pool",
+            "list_rc_accounts",
+            "list_rc_direct_delegations"
           ],
           # tags_api: [
           #   "get_active_votes",
@@ -242,6 +245,43 @@ module Hive
           ],
           reputation_api: [
             "get_account_reputations"
+          ],
+          wallet_bridge_api: [
+            "broadcast_transaction",
+            "broadcast_transaction_synchronous",
+            "find_proposals",
+            "find_rc_accounts",
+            "find_recurrent_transfers",
+            "get_account",
+            "get_account_history",
+            "get_accounts",
+            "get_active_witnesses",
+            "get_block",
+            "get_chain_properties",
+            "get_collateralized_conversion_requests",
+            "get_conversion_requests",
+            "get_current_median_history_price",
+            "get_dynamic_global_properties",
+            "get_feed_history",
+            "get_hardfork_version",
+            "get_open_orders",
+            "get_ops_in_block",
+            "get_order_book",
+            "get_owner_history",
+            "get_reward_fund",
+            "get_transaction",
+            "get_version",
+            "get_withdraw_routes",
+            "get_witness",
+            "get_witness_schedule",
+            "is_known_transaction",
+            "list_accounts",
+            "list_my_accounts",
+            "list_proposal_votes",
+            "list_proposals",
+            "list_rc_accounts",
+            "list_rc_direct_delegations",
+            "list_witnesses"
           ]
         }
         
@@ -293,6 +333,7 @@ module Hive
             assert_equal Symbol, method.class, "did not expect: #{method.inspect}"
             
             next if api == :bridge
+            next if api == :wallet_bridge_api
             
             # TODO Remove this skip once all nodes have this signature.  Seems like
             # there's a node running a different version of hived atn the moment.

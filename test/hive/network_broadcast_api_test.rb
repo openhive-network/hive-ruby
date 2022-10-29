@@ -12,7 +12,7 @@ module Hive
     end
     
     def test_inspect
-      assert_equal "#<NetworkBroadcastApi [@chain=hive, @methods=<2 elements>]>", @api.inspect
+      assert_equal "#<NetworkBroadcastApi [@chain=hive, @methods=<1 element>]>", @api.inspect
     end
     
     def test_method_missing
@@ -24,26 +24,6 @@ module Hive
     def test_all_respond_to
       @methods.each do |key|
         assert @api.respond_to?(key), "expect rpc respond to #{key}"
-      end
-    end
-    
-    def test_broadcast_block
-      vcr_cassette('broadcast_block') do
-        options = {
-          block: {
-            previous: "0000000000000000000000000000000000000000",
-            timestamp: "1970-01-01T00:00:00",
-            witness: "",
-            transaction_merkle_root: "0000000000000000000000000000000000000000",
-            extensions: [],
-            witness_signature: "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-            transactions: []
-          }
-        }
-        
-        assert_raises BlockTooOldError do
-          @api.broadcast_block(options)
-        end
       end
     end
     
@@ -61,7 +41,7 @@ module Hive
           max_block_age: -1
         }
         
-        assert_raises EmptyTransactionError do
+        assert_raises TransactionExpiredError do
           @api.broadcast_transaction(options)
         end
       end

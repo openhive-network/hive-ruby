@@ -142,7 +142,7 @@ module Hive
         raise Hive::TransactionIndexDisabledError, "#{context}: #{error.message}", build_backtrace(error)
       end
       
-      if error.message.include? 'is_valid_account_name'
+      if error.message.include?('Assert Exception:false: Account name ') && error.message.include?(' is not valid. Please follow the RFC 1035 rules.')
         raise Hive::InvalidAccountError, "#{context}: #{error.message}", build_backtrace(error)
       end
       
