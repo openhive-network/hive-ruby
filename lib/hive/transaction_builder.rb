@@ -255,6 +255,7 @@ module Hive
             hex = @chain_id + hex
             digest = unhexlify(hex)
             digest_hex = Digest::SHA256.digest(digest)
+            # TODO OpenSSL 3.0 immutable key - https://github.com/ruby/openssl/issues/619
             private_keys = @wif.map{ |wif| Bitcoin::Key.from_base58 wif }
             ec = Bitcoin::OpenSSL_EC
             count = 0
