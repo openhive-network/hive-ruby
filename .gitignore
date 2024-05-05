@@ -52,3 +52,7 @@ Gemfile.lock
 
 # gource output
 output.mp4
+
+# local idea settings
+.idea
+
