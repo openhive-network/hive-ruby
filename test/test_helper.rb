@@ -31,7 +31,7 @@ VCR.insert_cassette('global_cassette', record: :once, match_requests_on: [:metho
 @jsonrpc = Hive::Jsonrpc.new
 @jsonrpc.get_api_methods # caches up methods
 
-class Hive::Test < MiniTest::Test
+class Hive::Test < Minitest::Test
   defined? prove_it! and prove_it!
   
   TEST_NODE = ENV.fetch 'TEST_NODE', Hive::ChainConfig::NETWORKS_HIVE_DEFAULT_NODE
