@@ -26,11 +26,6 @@ class Minitest::Test
   parallelize_me! unless defined? WebMock
 end
 
-# before tests, outside test threads
-VCR.insert_cassette('global_cassette', record: :once, match_requests_on: [:method, :uri, :body])
-@jsonrpc = Hive::Jsonrpc.new
-@jsonrpc.get_api_methods # caches up methods
-
 class Hive::Test < Minitest::Test
   defined? prove_it! and prove_it!
   

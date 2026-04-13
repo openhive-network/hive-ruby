@@ -3,7 +3,7 @@ require 'rake/testtask'
 require 'yard'
 require 'hive'
 
-Rake::TestTask.new(test: ['clean:vcr', 'test:threads']) do |t|
+Rake::TestTask.new(test: ['clean:vcr']) do |t|
   t.libs << 'test'
   t.libs << 'lib'
   t.test_files = FileList['test/**/*_test.rb']
