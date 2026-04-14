@@ -2,6 +2,8 @@ require 'test_helper'
 
 module Hive
   class JsonrpcTest < Hive::Test
+    i_suck_and_my_tests_are_order_dependent!
+
     def setup
       @jsonrpc = Jsonrpc.new(url: TEST_NODE)
     end

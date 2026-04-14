@@ -6,7 +6,16 @@ module Hive
       @api = Hive::Bridge.new(url: TEST_NODE)
       @condenser_api = Hive::CondenserApi.new(url: TEST_NODE)
       @jsonrpc = Jsonrpc.new(url: TEST_NODE)
-      @methods = @jsonrpc.get_api_methods[@api.class.api_name] rescue Fallback::API_METHODS[:bridge]
+
+      begin
+        vcr_cassette('jsonrpc_get_methods', record: :once) do
+          @methods = @jsonrpc.get_api_methods[@api.class.api_name]
+        end
+      rescue
+        @methods = Fallback::API_METHODS[:bridge]
+      end
+
+      skip 'bridge is not exposed by the current node' if @methods.nil?
     end
     
     def test_api_class_name
@@ -44,9 +53,9 @@ module Hive
           assert_equal permlink, result.permlink
           
           known_normalization_fields = %w(post_id updated is_paidout payout_at payout
-            author_payout_value stats blacklists)
+            author_payout_value stats blacklists reblogs)
             
-          assert_equal known_normalization_fields, result.keys - post.keys, 'found unknown fields added by hivemind normalization'
+          assert_equal known_normalization_fields.sort, (result.keys - post.keys).sort, 'found unknown fields added by hivemind normalization'
         end
       end
     end

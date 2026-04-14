@@ -7,8 +7,19 @@ module Hive
     end
     
     def test_http_request
-      request = @rpc_client.http_post
-      assert @rpc_client.http_request request
+      vcr_cassette('rpc_client_http_request', record: :once) do
+        request = @rpc_client.http_post
+        request.body = {
+          jsonrpc: '2.0',
+          method: 'jsonrpc.get_methods',
+          params: [],
+          id: 1
+        }.to_json
+
+        response = @rpc_client.http_request request
+        assert response
+        assert_equal '200', response.code
+      end
     end
     
     def test_evalidate_id
