@@ -5,7 +5,9 @@ module Hive
     def setup
       @api = Hive::TagsApi.new(url: TEST_NODE) rescue skip('tags_api not supported')
       @jsonrpc = Jsonrpc.new(url: TEST_NODE)
-      @methods = @jsonrpc.get_api_methods[@api.class.api_name]
+      vcr_cassette('jsonrpc_get_methods', record: :once) do
+        @methods = @jsonrpc.get_api_methods[@api.class.api_name]
+      end
     end
     def test_api_class_name
       assert_equal 'TagsApi', Hive::TagsApi::api_class_name

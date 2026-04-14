@@ -26,7 +26,7 @@ module Hive
     include ChainConfig
     include Utils
     
-    attr_accessor :app_base, :database_api, :block_api, :expiration, :operations
+    attr_accessor :app_base, :database_api, :block_api, :operations
     attr_writer :wif
     attr_reader :signed, :testnet, :force_serialize
     
@@ -99,6 +99,15 @@ module Hive
       
       self
     end
+
+    def expiration
+      @trx.expiration
+    end
+
+    def expiration=(value)
+      @trx.expiration = value
+      @signed = false
+    end
     
     # If the transaction can be prepared, this method will do so and set the
     # expiration.  Once the expiration is set, it will not re-prepare.  If you
@@ -109,37 +118,48 @@ module Hive
     # @return {TransactionBuilder}
     def prepare
       if @trx.expired?
-        catch :prepare_header do; begin
-          @database_api.get_dynamic_global_properties do |properties|
+        loop do
+          begin
+            properties = nil
+            header = nil
+            block_number = nil
+
+            @database_api.get_dynamic_global_properties do |result|
+              properties = result
+              nil
+            end
+
             block_number = properties.last_irreversible_block_num
             block_header_args = if app_base?
               {block_num: block_number}
             else
               block_number
             end
-          
+
             @block_api.get_block_header(block_header_args) do |result|
               header = if app_base?
                 result.header
               else
                 result
               end
-              
-              @trx.ref_block_num = (block_number - 1) & 0xFFFF
-              @trx.ref_block_prefix = unhexlify(header.previous[8..-1]).unpack('V*')[0]
-              @trx.expiration ||= (Time.parse(properties.time + 'Z') + EXPIRE_IN_SECS).utc
+              nil
+            end
+
+            @trx.ref_block_num = (block_number - 1) & 0xFFFF
+            @trx.ref_block_prefix = unhexlify(header.previous[8..-1]).unpack('V*')[0]
+            @trx.expiration = (Time.parse(properties.time + 'Z') + EXPIRE_IN_SECS).utc
+            break
+          rescue => e
+            if can_retry? e
+              @error_pipe.puts "#{e} ... retrying."
+              next
+            else
+              raise e
             end
           end
-        rescue => e
-          if can_retry? e
-            @error_pipe.puts "#{e} ... retrying."
-            throw :prepare_header
-          else
-            raise e
-          end
-        end; end
+        end
       end
-      
+
       self
     end
     
@@ -213,10 +233,12 @@ module Hive
     # Appends to the `signatures` array of the transaction, built from a
     # serialized digest.
     #
-    # @return {Hash | TransactionBuilder} The fully signed transaction if a `wif` is provided or the instance of the {TransactionBuilder} if a `wif` has not yet been provided.
+    # @return [Transaction] The transaction payload.  Even when signing is skipped
+    #   (for example due to missing wif or an expired transaction), callers expect
+    #   a concrete transaction object rather than the builder instance itself.
     def sign
-      return self if @wif.empty?
-      return self if @trx.expired?
+      return @trx if @wif.empty?
+      return @trx if @trx.expired?
       
       unless @signed
         catch :serialize do; begin

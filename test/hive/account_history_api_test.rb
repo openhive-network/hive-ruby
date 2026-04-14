@@ -6,7 +6,9 @@ module Hive
     def setup
       @api = Hive::AccountHistoryApi.new(url: TEST_NODE) rescue skip('AccountHistoryApi is disabled.')
       @jsonrpc = Jsonrpc.new(url: TEST_NODE)
-      @methods = @jsonrpc.get_api_methods[@api.class.api_name]
+      vcr_cassette('jsonrpc_get_methods', record: :once) do
+        @methods = @jsonrpc.get_api_methods[@api.class.api_name]
+      end
     end
     
     def test_api_class_name

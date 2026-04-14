@@ -5,11 +5,15 @@ module Hive
     def setup
       @api = Api.new(url: TEST_NODE)
       @jsonrpc = Jsonrpc.new(url: TEST_NODE)
-      @methods = @jsonrpc.get_api_methods[@api.class.api_name]
+      vcr_cassette('jsonrpc_get_methods', record: :once) do
+        @methods = @jsonrpc.get_api_methods[@api.class.api_name]
+      end
       
-      @api.get_config do |result|
-        unless result['IS_TEST_NET']
-          skip "Skipped, because #{TEST_NODE} is not testnet.  Instead, found chain id: #{result['HIVE_CHAIN_ID']}"
+      vcr_cassette('api_get_config', record: :once) do
+        @api.get_config do |result|
+          unless result['IS_TEST_NET']
+            skip "Skipped, because #{TEST_NODE} is not testnet.  Instead, found chain id: #{result['HIVE_CHAIN_ID']}"
+          end
         end
       end
     end

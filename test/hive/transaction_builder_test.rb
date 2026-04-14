@@ -89,9 +89,9 @@ module Hive
           permlink: 'firstpost',
           weight: 10000
         })
+        
+        assert 1, builder.transaction(sign: false).operations.size
       end
-      
-      assert 1, builder.transaction(sign: false).operations.size
     end
     
     def test_put_array
@@ -104,9 +104,9 @@ module Hive
           permlink: 'firstpost',
           weight: 10000
         }])
+        
+        assert 1, builder.transaction(sign: false).operations.size
       end
-      
-      assert 1, builder.transaction(sign: false).operations.size
     end
     
     def test_put_symbol
@@ -119,9 +119,9 @@ module Hive
           permlink: 'firstpost',
           weight: 10000
         })
+        
+        assert 1, builder.transaction(sign: false).operations.size
       end
-      
-      assert 1, builder.transaction(sign: false).operations.size
     end
     
     def test_put_string
@@ -134,9 +134,9 @@ module Hive
           permlink: 'firstpost',
           weight: 10000
         })
+        
+        assert 1, builder.transaction(sign: false).operations.size
       end
-      
-      assert 1, builder.transaction(sign: false).operations.size
     end
     
     def test_potential_signatures
