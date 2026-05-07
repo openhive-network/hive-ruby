@@ -26,6 +26,8 @@ module Hive
     include ChainConfig
     include Utils
     
+    MAX_CANONICAL_SIGNATURE_ATTEMPTS = 100
+
     attr_accessor :app_base, :database_api, :block_api, :operations
     attr_writer :wif
     attr_reader :signed, :testnet, :force_serialize
@@ -277,21 +279,37 @@ module Hive
             hex = @chain_id + hex
             digest = unhexlify(hex)
             digest_hex = Digest::SHA256.digest(digest)
-            private_keys = @wif.map{ |wif| Bitcoin::Key.from_base58 wif }
-            ec = Bitcoin::OpenSSL_EC
+            legacy_bitcoin_ruby_signer = ENV['HIVE_USE_LEGACY_BITCOIN_RUBY_SIGNER'] == '1'
+            private_keys = @wif.map do |wif|
+              if legacy_bitcoin_ruby_signer
+                Bitcoin::Key.from_base58(wif)
+              else
+                SigningKey.from_base58(wif)
+              end
+            end
+            ec = legacy_bitcoin_ruby_signer ? Bitcoin::OpenSSL_EC : CompactSigner.default
             count = 0
             
             private_keys.each do |private_key|
               sig = nil
-              
-              loop do
-                count += 1
-                @error_pipe.puts "#{count} attempts to find canonical signature" if count % 40 == 0
-                public_key_hex = private_key.pub
-                sig = ec.sign_compact(digest_hex, private_key.priv, public_key_hex, false)
-                
-                next if public_key_hex != ec.recover_compact(digest_hex, sig)
-                break if canonical? sig
+              public_key_hex = private_key.pub
+              private_key_hex = private_key.respond_to?(:private_key_hex) ? private_key.private_key_hex : private_key.priv
+              compressed = private_key.respond_to?(:compressed) ? private_key.compressed : false
+
+              unless legacy_bitcoin_ruby_signer
+                sig = ec.sign_compact(digest_hex, private_key_hex, public_key_hex, compressed)
+              else
+                loop do
+                  count += 1
+                  @error_pipe.puts "#{count} attempts to find canonical signature" if count % 40 == 0
+                  sig = ec.sign_compact(digest_hex, private_key_hex, public_key_hex, compressed)
+                  
+                  break if public_key_hex == ec.recover_compact(digest_hex, sig) && canonical?(sig)
+
+                  if count >= MAX_CANONICAL_SIGNATURE_ATTEMPTS
+                    raise Hive::BaseError, "Unable to find canonical signature after #{MAX_CANONICAL_SIGNATURE_ATTEMPTS} attempts"
+                  end
+                end
               end
               
               @trx.signatures << hexlify(sig)
