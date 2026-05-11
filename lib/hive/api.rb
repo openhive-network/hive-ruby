@@ -162,7 +162,9 @@ module Hive
       @@signatures[url][rpc_method_name] ||= begin
         Api::jsonrpc(url).get_signature(method: rpc_method_name).result
       rescue => e
-        Hashie::Mash.new({args: Fallback::API_METHOD_SIGNATURES[@api_name][rpc_method_name.split('.').last.to_sym]})
+        fallback_signatures = Fallback::API_METHOD_SIGNATURES[@api_name] || {}
+        fallback_args = fallback_signatures[rpc_method_name.split('.').last.to_sym] || {}
+        Hashie::Mash.new({args: fallback_args})
       end
     end
     
@@ -219,6 +221,19 @@ module Hive
       response = rpc_client.rpc_execute(@api_name, m, rpc_args)
       
       if !!block
+        if ENV['HIVE_DEBUG_RPC_FLOW'] == 'true'
+          debug_result = case response
+          when Hashie::Mash then response.result
+          else response
+          end
+          preview = begin
+            debug_result.inspect
+          rescue
+            debug_result.to_s
+          end
+          @error_pipe.puts "RPC #{@api_name}.#{m} -> #{debug_result.class}: #{preview[0,200]}"
+        end
+
         case response
         when Hashie::Mash then yield response.result, response.error, response.id
         when Hashie::Array

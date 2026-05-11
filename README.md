@@ -49,6 +49,32 @@ To add the gem as a dependency to your project with [Bundler](http://bundler.io/
 gem 'hive-ruby', require: 'hive'
 ```
 
+## Signing backend notes
+
+`hive-ruby` signs transactions with a `libsecp256k1` backend through `rbsecp256k1`.  This avoids Ruby/OpenSSL EC mutation behavior that can break older `bitcoin-ruby` signing paths on Ruby/OpenSSL 3 platforms.
+
+If signing fails while installing or deploying, check the native build prerequisites first:
+
+```bash
+bundle install
+bundle exec ruby -rrbsecp256k1 -e 'puts Secp256k1.have_recovery?'
+```
+
+The command should print `true`.  If the `rbsecp256k1` native extension cannot build, make sure normal native Ruby build tools are available.  On macOS, the bundled `libsecp256k1` build may need Automake/Autoconf tooling, e.g.:
+
+```bash
+brew install automake autoconf
+bundle pristine rbsecp256k1
+```
+
+For downstream projects comparing deployment strategies:
+
+* **Default path:** use the bundled `rbsecp256k1` signer.  This is the expected path for modern Ruby/OpenSSL environments.
+* **Legacy fallback:** set `HIVE_USE_LEGACY_BITCOIN_RUBY_SIGNER=1` to try the old `bitcoin-ruby` signer path.  This is mainly useful for comparison or troubleshooting and may still fail on OpenSSL 3.
+* **Fork strategy:** if a downstream project carries a patched `bitcoin-ruby` fork, test it behind the legacy fallback first.  If it proves reliable, compare its output against the default `rbsecp256k1` path before relying on it in production.
+
+`bitcoin-ruby` is still present as a dependency in v1, so projects should not assume this release removes all of its transitive dependencies.  The important change is that normal transaction signing no longer depends on `bitcoin-ruby`'s OpenSSL EC signing internals.
+
 ## Examples
 
 ### Broadcast Vote

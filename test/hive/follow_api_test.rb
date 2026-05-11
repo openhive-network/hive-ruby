@@ -5,7 +5,11 @@ module Hive
     def setup
       @api = Hive::FollowApi.new(url: TEST_NODE) rescue skip('follow_api not supported')
       @jsonrpc = Jsonrpc.new(url: TEST_NODE)
-      @methods = @jsonrpc.get_api_methods[@api.class.api_name]
+      vcr_cassette('jsonrpc_get_methods', record: :once) do
+        @methods = @jsonrpc.get_api_methods[@api.class.api_name]
+      end
+
+      skip 'follow_api is not exposed by the current node' if @methods.nil?
     end
     def test_api_class_name
       assert_equal 'FollowApi', Hive::FollowApi::api_class_name

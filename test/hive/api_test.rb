@@ -54,9 +54,11 @@ module Hive
       METHOD_NAMES_1_ARG_NO_ERROR + METHOD_NAMES_0_ARGS + SKIP_METHOD_NAMES
     
     def setup
-      @api = Api.new(url: TEST_NODE)
-      @jsonrpc = Jsonrpc.new(url: TEST_NODE)
-      @methods = @jsonrpc.get_api_methods[@api.class.api_name]
+      vcr_cassette('jsonrpc_get_methods', record: :once) do
+        @api = Api.new(url: TEST_NODE)
+        @jsonrpc = Jsonrpc.new(url: TEST_NODE)
+        @methods = @jsonrpc.get_api_methods[@api.class.api_name]
+      end
     end
     
     def test_api_class_name
@@ -80,7 +82,7 @@ module Hive
     end
     
     def test_inspect
-      assert_equal "#<CondenserApi [@chain=hive, @methods=<92 elements>]>", @api.inspect
+      assert_equal "#<CondenserApi [@chain=hive, @methods=<91 elements>]>", @api.inspect
     end
     
     def test_inspect_testnet

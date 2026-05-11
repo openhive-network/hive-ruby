@@ -1371,6 +1371,10 @@ module Hive
         tx.operations = ops
         trx = tx.transaction
         
+        unless trx.is_a?(Transaction)
+          raise Hive::ArgumentError, "Expected Hive::Transaction from TransactionBuilder, got #{trx.class}"
+        end
+        
         response = if !!options[:pretend]
           if !!options[:app_base]
             database_api(options).verify_authority(trx: trx)

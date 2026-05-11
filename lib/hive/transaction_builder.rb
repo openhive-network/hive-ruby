@@ -26,7 +26,9 @@ module Hive
     include ChainConfig
     include Utils
     
-    attr_accessor :app_base, :database_api, :block_api, :expiration, :operations
+    MAX_CANONICAL_SIGNATURE_ATTEMPTS = 100
+
+    attr_accessor :app_base, :database_api, :block_api, :operations
     attr_writer :wif
     attr_reader :signed, :testnet, :force_serialize
     
@@ -99,6 +101,15 @@ module Hive
       
       self
     end
+
+    def expiration
+      @trx.expiration
+    end
+
+    def expiration=(value)
+      @trx.expiration = value
+      @signed = false
+    end
     
     # If the transaction can be prepared, this method will do so and set the
     # expiration.  Once the expiration is set, it will not re-prepare.  If you
@@ -109,37 +120,48 @@ module Hive
     # @return {TransactionBuilder}
     def prepare
       if @trx.expired?
-        catch :prepare_header do; begin
-          @database_api.get_dynamic_global_properties do |properties|
+        loop do
+          begin
+            properties = nil
+            header = nil
+            block_number = nil
+
+            @database_api.get_dynamic_global_properties do |result|
+              properties = result
+              nil
+            end
+
             block_number = properties.last_irreversible_block_num
             block_header_args = if app_base?
               {block_num: block_number}
             else
               block_number
             end
-          
+
             @block_api.get_block_header(block_header_args) do |result|
               header = if app_base?
                 result.header
               else
                 result
               end
-              
-              @trx.ref_block_num = (block_number - 1) & 0xFFFF
-              @trx.ref_block_prefix = unhexlify(header.previous[8..-1]).unpack('V*')[0]
-              @trx.expiration ||= (Time.parse(properties.time + 'Z') + EXPIRE_IN_SECS).utc
+              nil
+            end
+
+            @trx.ref_block_num = (block_number - 1) & 0xFFFF
+            @trx.ref_block_prefix = unhexlify(header.previous[8..-1]).unpack('V*')[0]
+            @trx.expiration = (Time.parse(properties.time + 'Z') + EXPIRE_IN_SECS).utc
+            break
+          rescue => e
+            if can_retry? e
+              @error_pipe.puts "#{e} ... retrying."
+              next
+            else
+              raise e
             end
           end
-        rescue => e
-          if can_retry? e
-            @error_pipe.puts "#{e} ... retrying."
-            throw :prepare_header
-          else
-            raise e
-          end
-        end; end
+        end
       end
-      
+
       self
     end
     
@@ -213,10 +235,12 @@ module Hive
     # Appends to the `signatures` array of the transaction, built from a
     # serialized digest.
     #
-    # @return {Hash | TransactionBuilder} The fully signed transaction if a `wif` is provided or the instance of the {TransactionBuilder} if a `wif` has not yet been provided.
+    # @return [Transaction] The transaction payload.  Even when signing is skipped
+    #   (for example due to missing wif or an expired transaction), callers expect
+    #   a concrete transaction object rather than the builder instance itself.
     def sign
-      return self if @wif.empty?
-      return self if @trx.expired?
+      return @trx if @wif.empty?
+      return @trx if @trx.expired?
       
       unless @signed
         catch :serialize do; begin
@@ -255,21 +279,37 @@ module Hive
             hex = @chain_id + hex
             digest = unhexlify(hex)
             digest_hex = Digest::SHA256.digest(digest)
-            private_keys = @wif.map{ |wif| Bitcoin::Key.from_base58 wif }
-            ec = Bitcoin::OpenSSL_EC
+            legacy_bitcoin_ruby_signer = ENV['HIVE_USE_LEGACY_BITCOIN_RUBY_SIGNER'] == '1'
+            private_keys = @wif.map do |wif|
+              if legacy_bitcoin_ruby_signer
+                Bitcoin::Key.from_base58(wif)
+              else
+                SigningKey.from_base58(wif)
+              end
+            end
+            ec = legacy_bitcoin_ruby_signer ? Bitcoin::OpenSSL_EC : CompactSigner.default
             count = 0
             
             private_keys.each do |private_key|
               sig = nil
-              
-              loop do
-                count += 1
-                @error_pipe.puts "#{count} attempts to find canonical signature" if count % 40 == 0
-                public_key_hex = private_key.pub
-                sig = ec.sign_compact(digest_hex, private_key.priv, public_key_hex, false)
-                
-                next if public_key_hex != ec.recover_compact(digest_hex, sig)
-                break if canonical? sig
+              public_key_hex = private_key.pub
+              private_key_hex = private_key.respond_to?(:private_key_hex) ? private_key.private_key_hex : private_key.priv
+              compressed = private_key.respond_to?(:compressed) ? private_key.compressed : false
+
+              unless legacy_bitcoin_ruby_signer
+                sig = ec.sign_compact(digest_hex, private_key_hex, public_key_hex, compressed)
+              else
+                loop do
+                  count += 1
+                  @error_pipe.puts "#{count} attempts to find canonical signature" if count % 40 == 0
+                  sig = ec.sign_compact(digest_hex, private_key_hex, public_key_hex, compressed)
+                  
+                  break if public_key_hex == ec.recover_compact(digest_hex, sig) && canonical?(sig)
+
+                  if count >= MAX_CANONICAL_SIGNATURE_ATTEMPTS
+                    raise Hive::BaseError, "Unable to find canonical signature after #{MAX_CANONICAL_SIGNATURE_ATTEMPTS} attempts"
+                  end
+                end
               end
               
               @trx.signatures << hexlify(sig)

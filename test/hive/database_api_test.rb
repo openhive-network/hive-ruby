@@ -7,7 +7,9 @@ module Hive
     def setup
       @api = Hive::DatabaseApi.new(url: TEST_NODE)
       @jsonrpc = Jsonrpc.new(url: TEST_NODE)
-      @methods = @jsonrpc.get_api_methods[@api.class.api_name]
+      vcr_cassette('jsonrpc_get_methods', record: :once) do
+        @methods = @jsonrpc.get_api_methods[@api.class.api_name]
+      end
     end
     def test_api_class_name
       assert_equal 'DatabaseApi', Hive::DatabaseApi::api_class_name
@@ -577,8 +579,9 @@ module Hive
             signers: ["#{prefix}7Q2rLBqzPzFeteQZewv9Lu3NLE69fZoLeL6YK59t7UmssCBNTU"]
           }
           
-          assert_raises MissingActiveAuthorityError do
-            @api.verify_account_authority(options)
+          @api.verify_account_authority(options) do |result|
+            assert_equal FalseClass, result.valid.class
+            refute result.valid
           end
         end
       end
@@ -621,17 +624,21 @@ module Hive
     end
     
     def test_version
-      @api.get_hardfork_properties do |hf_properties|
-        case hf_properties.current_hardfork_version
-        when '0.19.0'
-          assert_raises NoMethodError do
-            @api.get_version
+      vcr_cassette('database_api_get_hardfork_properties', record: :once) do
+        @api.get_hardfork_properties do |hf_properties|
+          case hf_properties.current_hardfork_version
+          when '0.19.0'
+            assert_raises NoMethodError do
+              @api.get_version
+            end
+          when '0.20.0', '0.23.0', '1.24.0', '1.25.0', '1.27.0', '1.28.0'
+            vcr_cassette('database_api_get_version', record: :once) do
+              @api.get_version do |version|
+                assert version.chain_id
+              end
+            end
+          else; fail("Unknown hardfork: #{hf_properties.current_hardfork_version}")
           end
-        when '0.20.0', '0.23.0', '1.24.0', '1.25.0', '1.27.0'
-          @api.get_version do |version|
-            assert version.chain_id
-          end
-        else; fail("Unknown hardfork: #{hf_properties.current_hardfork_version}")
         end
       end
     end

@@ -82,6 +82,10 @@ module Hive
           else
             request_object
           end.to_json
+
+          if ENV['HIVE_DEBUG_RPC_HTTP'] == 'true'
+            @error_pipe.puts "HTTP RPC request #{api_name}.#{api_method}: #{request.body[0,300]}"
+          end
           
           response = catch :http_request do; begin; http_request(request)
           rescue *TIMEOUT_ERRORS => e
@@ -94,6 +98,9 @@ module Hive
           
           case response.code
           when '200'
+            if ENV['HIVE_DEBUG_RPC_HTTP'] == 'true'
+              @error_pipe.puts "HTTP RPC response #{api_name}.#{api_method}: #{response.body[0,300]}"
+            end
             response = catch :parse_json do; begin; JSON[response.body]
             rescue *TIMEOUT_ERRORS => e
               throw retry_timeout(:parse_json, e)
