@@ -53,7 +53,13 @@ gem 'hive-ruby', require: 'hive'
 
 `hive-ruby` signs transactions with a `libsecp256k1` backend through `rbsecp256k1`.  This avoids Ruby/OpenSSL EC mutation behavior that can break older `bitcoin-ruby` signing paths on Ruby/OpenSSL 3 platforms.
 
-If signing fails while installing or deploying, check the native build prerequisites first:
+RPC queries and streaming do not require a signing gem.  Applications that sign transactions or derive public keys must explicitly add the default signer to their Gemfile, including when upgrading from a version that installed it automatically:
+
+```ruby
+gem 'rbsecp256k1', '~> 6.0'
+```
+
+Without Bundler, install it with `gem install rbsecp256k1 -v '~> 6.0'`.  For Bundler applications, install and check recovery support:
 
 ```bash
 bundle install
@@ -69,7 +75,7 @@ bundle pristine rbsecp256k1
 
 For downstream projects comparing deployment strategies:
 
-* **Default path:** use the bundled `rbsecp256k1` signer.  This is the expected path for modern Ruby/OpenSSL environments.
+* **Default path:** install `rbsecp256k1` as described above.  This is the expected signer for modern Ruby/OpenSSL environments.
 * **Legacy fallback:** add `gem 'bitcoin-ruby', '0.0.20'` to your application's Gemfile, run `bundle install`, and set `HIVE_USE_LEGACY_BITCOIN_RUBY_SIGNER=1` to try the old signer path.  This is mainly useful for comparison or troubleshooting and may still fail on OpenSSL 3.
 * **Fork strategy:** if a downstream project carries a patched `bitcoin-ruby` fork, test it behind the legacy fallback first.  If it proves reliable, compare its output against the default `rbsecp256k1` path before relying on it in production.
 

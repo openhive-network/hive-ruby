@@ -35,6 +35,20 @@ module Hive
       assert_equal '02604738fa008878e9e3a4853307ad41524234dd9e3d48ff559d4b04094c42800f', signer.public_key(@private_key_hex, true)
     end
 
+    def test_rbsecp256k1_reports_missing_optional_dependency
+      unavailable_signer = Class.new(CompactSigner::Rbsecp256k1) do
+        def require(_path)
+          raise LoadError, 'cannot load such file -- rbsecp256k1'
+        end
+      end
+
+      error = assert_raises(Hive::BaseError) { unavailable_signer.new }
+
+      assert_includes error.message, "gem 'rbsecp256k1', '~> 6.0'"
+      assert_includes error.message, 'bundle install'
+      assert_includes error.message, 'cannot load such file -- rbsecp256k1'
+    end
+
   private
     SECP256K1_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 

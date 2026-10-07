@@ -13,7 +13,7 @@ module Hive
 
         @context = Secp256k1::Context.create
       rescue LoadError => e
-        raise Hive::BaseError, "rbsecp256k1 is not available: #{e.message}"
+        raise Hive::BaseError, "Signing requires rbsecp256k1; add gem 'rbsecp256k1', '~> 6.0' to your Gemfile and run bundle install: #{e.message}"
       end
 
       def sign_compact(digest32, private_key_hex, public_key_hex = nil, compressed = false)
