@@ -1,6 +1,64 @@
 image: ruby:2.6.1-alpine
 
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+native_backends:
+  image: ruby:3.3-bookworm
+  stage: test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH'
+  before_script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends automake libtool pkg-config
+    - bundle install
+  script:
+    - bundle exec ruby -W1 -Itest -Ilib test/backends.rb --seed=19327 --verbose
+    - mkdir -p pkg
+    - gem build hive-ruby.gemspec --output pkg/hive-ruby.gem
+  artifacts:
+    paths:
+      - pkg/hive-ruby.gem
+      - Gemfile.lock
+    expire_in: 1 week
+
+pure_ruby_backends:
+  image: ruby:3.3-slim-bookworm
+  stage: test
+  needs:
+    - job: native_backends
+      artifacts: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH'
+  script:
+    - |
+      for tool in cc gcc g++ clang make; do
+        if command -v "$tool"; then
+          echo "Compiler-free verification found $tool" >&2
+          exit 1
+        fi
+      done
+    - gem install pkg/hive-ruby.gem --no-document
+    - |
+      ruby -rrubygems/package -rfileutils <<'RUBY'
+      spec = Gem::Package.new('pkg/hive-ruby.gem').spec
+      FileUtils.mkdir_p('tmp/pure-ruby')
+      File.write('tmp/pure-ruby/Gemfile', <<~GEMFILE)
+        source 'https://rubygems.org'
+        gem #{spec.name.inspect}, #{spec.version.to_s.inspect}
+      GEMFILE
+      RUBY
+    - BUNDLE_GEMFILE=tmp/pure-ruby/Gemfile bundle install --local
+    - BUNDLE_GEMFILE=tmp/pure-ruby/Gemfile bundle exec ruby test/pure_ruby/smoke.rb
+
 pages:
+  stage: deploy
+  dependencies: []
   script:
   - apk add --update --no-cache build-base libxml2-dev libxslt-dev libstdc++ tzdata mariadb-dev nodejs ca-certificates yarn
   - bundle install --path vendor
@@ -13,5 +71,5 @@ pages:
   cache:
     paths:
       - vendor
-  only:
-  - master
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'

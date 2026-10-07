@@ -97,6 +97,14 @@ BUNDLE_GEMFILE=test/pure_ruby/Gemfile bundle install
 BUNDLE_GEMFILE=test/pure_ruby/Gemfile bundle exec ruby test/pure_ruby/smoke.rb
 ```
 
+CI runs the offline backend tests on branches and merge requests, then installs
+the built gem in a compiler-free Ruby image and runs this smoke test with native
+backends disabled. To run the native and fallback contract tests locally:
+
+```bash
+bundle exec ruby -W1 -Itest -Ilib test/backends.rb --seed=19327 --verbose
+```
+
 ## Examples
 
 ### Broadcast Vote
