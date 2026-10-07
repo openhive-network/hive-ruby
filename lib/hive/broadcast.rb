@@ -1,4 +1,3 @@
-require 'bitcoin'
 require 'digest'
 require 'time'
 

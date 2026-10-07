@@ -123,6 +123,32 @@ module Hive
       refute builder.send(:canonical?, signature), 'fixture should prove rbsecp256k1 signer does not use the legacy canonical-grinding loop'
       assert_equal public_key_hex, CompactSigner.default.recover_compact(digest, signature)
     end
+
+    def test_sign_reports_missing_optional_legacy_dependency
+      previous_signer = ENV['HIVE_USE_LEGACY_BITCOIN_RUBY_SIGNER']
+      ENV['HIVE_USE_LEGACY_BITCOIN_RUBY_SIGNER'] = '1'
+      builder = TransactionBuilder.new(@options.merge(
+        database_api: FakeSigningDatabaseApi.new,
+        block_api: FakeSigningBlockApi.new,
+        force_serialize: true,
+        wif: @wif,
+        trx: { expiration: '2099-05-07T00:59:54' }
+      ))
+      required = []
+      builder.define_singleton_method(:require) do |path|
+        required << path
+        error = LoadError.new('missing optional dependency')
+        error.define_singleton_method(:path) { path }
+        raise error
+      end
+
+      error = assert_raises(LoadError) { builder.sign }
+
+      assert_equal ['bitcoin'], required
+      assert_includes error.message, "gem 'bitcoin-ruby', '0.0.20'"
+    ensure
+      ENV['HIVE_USE_LEGACY_BITCOIN_RUBY_SIGNER'] = previous_signer
+    end
     
     # Just like: https://github.com/openhive-network/hive-js/blob/1a0f872b81399cd98c1a86bed2f67e7cf8a279da/examples/multisig.js
     def test_sign_multisig

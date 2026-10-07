@@ -280,6 +280,15 @@ module Hive
             digest = unhexlify(hex)
             digest_hex = Digest::SHA256.digest(digest)
             legacy_bitcoin_ruby_signer = ENV['HIVE_USE_LEGACY_BITCOIN_RUBY_SIGNER'] == '1'
+            if legacy_bitcoin_ruby_signer
+              begin
+                require 'bitcoin'
+              rescue LoadError => e
+                raise unless e.path == 'bitcoin'
+                raise LoadError, "Legacy signing requires bitcoin-ruby; add gem 'bitcoin-ruby', '0.0.20' to your Gemfile"
+              end
+            end
+
             private_keys = @wif.map do |wif|
               if legacy_bitcoin_ruby_signer
                 Bitcoin::Key.from_base58(wif)

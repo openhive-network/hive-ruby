@@ -33,7 +33,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'json', '~> 2.1', '>= 2.1.0'
   spec.add_dependency 'logging', '~> 2.2', '>= 2.2.0'
   spec.add_dependency 'hashie', '>= 3.5'
-  spec.add_dependency 'bitcoin-ruby', '~> 0.0', '0.0.20'
   spec.add_dependency 'rbsecp256k1', '~> 6.0', '>= 6.0.0'
   spec.add_dependency 'bindata', '~> 2.4', '>= 2.4.4'
   spec.add_dependency 'base58', '~> 0.2', '>= 0.2.3'

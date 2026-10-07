@@ -70,10 +70,10 @@ bundle pristine rbsecp256k1
 For downstream projects comparing deployment strategies:
 
 * **Default path:** use the bundled `rbsecp256k1` signer.  This is the expected path for modern Ruby/OpenSSL environments.
-* **Legacy fallback:** set `HIVE_USE_LEGACY_BITCOIN_RUBY_SIGNER=1` to try the old `bitcoin-ruby` signer path.  This is mainly useful for comparison or troubleshooting and may still fail on OpenSSL 3.
+* **Legacy fallback:** add `gem 'bitcoin-ruby', '0.0.20'` to your application's Gemfile, run `bundle install`, and set `HIVE_USE_LEGACY_BITCOIN_RUBY_SIGNER=1` to try the old signer path.  This is mainly useful for comparison or troubleshooting and may still fail on OpenSSL 3.
 * **Fork strategy:** if a downstream project carries a patched `bitcoin-ruby` fork, test it behind the legacy fallback first.  If it proves reliable, compare its output against the default `rbsecp256k1` path before relying on it in production.
 
-`bitcoin-ruby` is still present as a dependency in v1, so projects should not assume this release removes all of its transitive dependencies.  The important change is that normal transaction signing no longer depends on `bitcoin-ruby`'s OpenSSL EC signing internals.
+`bitcoin-ruby` and its transitive dependencies are no longer required for normal use.  WIF decoding uses the existing pure Ruby `base58` gem and Ruby's SHA-256 digest support.  The default signer still requires the native `rbsecp256k1` extension; `bitcoin-ruby` is loaded only when legacy signing is explicitly selected.
 
 ## Examples
 
