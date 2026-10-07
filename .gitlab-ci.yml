@@ -21,6 +21,8 @@ native_backends:
     - bundle exec ruby -W1 -Itest -Ilib test/backends.rb --seed=19327 --verbose
     - mkdir -p pkg
     - gem build hive-ruby.gemspec --output pkg/hive-ruby.gem
+    - gem install pkg/hive-ruby.gem --local --no-document
+    - ruby test/installed_backends.rb
   artifacts:
     paths:
       - pkg/hive-ruby.gem

@@ -6,6 +6,13 @@ unless defined?(JSON::JSON_LOADED)
     # Bundler only exposes json when the application explicitly includes it.
   end
 
+  # Both gems provide json.rb and json/common.rb. RubyGems may have activated
+  # our pure dependency first; let the native gem or stdlib supply those files.
+  if (pure_json = Gem.loaded_specs['json_pure'])
+    paths = pure_json.full_require_paths
+    $LOAD_PATH.replace(($LOAD_PATH - paths) + paths)
+  end
+
   begin
     require 'json'
   rescue LoadError
