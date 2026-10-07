@@ -11,7 +11,6 @@ require 'minitest/line/describe_track'
 require 'webmock/minitest'
 require 'vcr'
 require 'yaml'
-require 'awesome_print'
 
 VCR.configure do |c|
   c.cassette_library_dir = 'test/fixtures/vcr_cassettes'
@@ -160,6 +159,20 @@ class Hive::Test < Minitest::Test
       rescue Psych::SyntaxError => e
         skip 'This happens when we try to get fancy and disable thread-safety.'
       end
+    end
+  end
+end
+
+module Hive::ApiContractTests
+  def test_method_missing
+    assert_raises NoMethodError do
+      @api.bogus
+    end
+  end
+
+  def test_all_respond_to
+    @methods.each do |key|
+      assert @api.respond_to?(key), "expect rpc respond to #{key}"
     end
   end
 end

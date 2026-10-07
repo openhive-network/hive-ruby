@@ -99,23 +99,8 @@ module Hive
       end
       
       def to_h
-        case @asset
-        when ASSET_HIVE then {
-          amount: (@amount.to_f * 1000).to_i.to_s,
-          precision: 3,
-          nai: NAI_HIVE
-        }
-        when ASSET_VESTS then {
-          amount: (@amount.to_f * 1000000).to_i.to_s,
-          precision: 6,
-          nai: NAI_VESTS
-        }
-        when ASSET_HBD then {
-          amount: (@amount.to_f * 1000).to_i.to_s,
-          precision: 3,
-          nai: NAI_HBD
-        }
-        end
+        values = to_a
+        values && Hash[%i(amount precision nai).zip(values)]
       end
       
       def to_s

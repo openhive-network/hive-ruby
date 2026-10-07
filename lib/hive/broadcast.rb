@@ -60,13 +60,10 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_vote
     def self.vote(options, &block)
-      required_fields = %i(voter author permlink weight)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(voter author permlink weight))
       
-      ops = [[:vote, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:vote, params]]), &block)
     end
     
     # Creates a post/comment.  This method simplifies content creation by
@@ -144,7 +141,6 @@ module Hive
     #   * :pretend (Boolean) Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_comment
     def self.comment(options, &block)
-      required_fields = %i(author body permlink parent_permlink)
       params = options[:params]
       
       if !!params[:metadata] && !!params[:json_metadata]
@@ -161,7 +157,7 @@ module Hive
         params[:permlink] ||= params[:title].downcase.gsub(/[^a-z0-9\-]+/, '-')
       end
       
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(author body permlink parent_permlink))
       
       ops = [[:comment, {
         parent_author: params[:parent_author] || '',
@@ -239,13 +235,10 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_delete_comment
     def self.delete_comment(options, &block)
-      required_fields = %i(author permlink)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(author permlink))
       
-      ops = [[:delete_comment, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:delete_comment, params]]), &block)
     end
     
     # Transfers asset from one account to another.
@@ -274,15 +267,12 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_transfer
     def self.transfer(options, &block)
-      required_fields = %i(from to amount memo)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(from to amount memo))
       
       params[:amount] = normalize_amount(options.merge amount: params[:amount])
       
-      ops = [[:transfer, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:transfer, params]]), &block)
     end
     
     # This operation converts HIVE into VFS (Vesting Fund Shares) at the
@@ -310,15 +300,12 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_transfer_to_vesting
     def self.transfer_to_vesting(options, &block)
-      required_fields = %i(from to amount)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(from to amount))
       
       params[:amount] = normalize_amount(options.merge amount: params[:amount])
       
-      ops = [[:transfer_to_vesting, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:transfer_to_vesting, params]]), &block)
     end
     
     # At any given point in time an account can be withdrawing from their
@@ -336,15 +323,12 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_withdraw_vesting
     def self.withdraw_vesting(options, &block)
-      required_fields = %i(account vesting_shares)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(account vesting_shares))
       
       params[:vesting_shares] = normalize_amount(options.merge amount: params[:vesting_shares])
       
-      ops = [[:withdraw_vesting, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:withdraw_vesting, params]]), &block)
     end
     
     # This operation creates a limit order and matches it against existing open
@@ -362,10 +346,9 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_limit_order_create
     def self.limit_order_create(options, &block)
-      required_fields = %i(owner orderid amount_to_sell min_to_receive
-        fill_or_kill)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(owner orderid amount_to_sell min_to_receive
+        fill_or_kill))
       
       params[:amount_to_sell] = normalize_amount(options.merge amount: params[:amount_to_sell])
       params[:min_to_receive] = normalize_amount(options.merge amount: params[:min_to_receive])
@@ -375,9 +358,7 @@ module Hive
         params[:expiration] = params[:expiration].strftime('%Y-%m-%dT%H:%M:%S')
       end
       
-      ops = [[:limit_order_create, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:limit_order_create, params]]), &block)
     end
     
     # Cancels an order and returns the balance to owner.
@@ -390,13 +371,10 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_limit_order_cancel
     def self.limit_order_cancel(options, &block)
-      required_fields = %i(owner orderid)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(owner orderid))
       
-      ops = [[:limit_order_cancel, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:limit_order_cancel, params]]), &block)
     end
     
     # Feeds can only be published by the top N witnesses which are included in
@@ -411,9 +389,8 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_feed_publish
     def self.feed_publish(options, &block)
-      required_fields = %i(publisher exchange_rate)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(publisher exchange_rate))
       
       exchange_rate = params[:exchange_rate] rescue nil || {}
       base = exchange_rate[:base]
@@ -421,9 +398,7 @@ module Hive
       params[:exchange_rate][:base] = normalize_amount(options.merge amount: base)
       params[:exchange_rate][:quote] = normalize_amount(options.merge amount: quote)
       
-      ops = [[:feed_publish, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:feed_publish, params]]), &block)
     end
     
     # This operation instructs the blockchain to start a conversion between
@@ -438,15 +413,12 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_convert
     def self.convert(options, &block)
-      required_fields = %i(owner requestid amount)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(owner requestid amount))
       
       params[:amount] = normalize_amount(options.merge amount: params[:amount])
       
-      ops = [[:convert, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:convert, params]]), &block)
     end
     
     # Create an account.
@@ -493,7 +465,6 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_account_create
     def self.account_create(options, &block)
-      required_fields = %i(fee creator new_account_name owner active posting memo_key json_metadata)
       params = options[:params]
       
       if !!params[:metadata] && !!params[:json_metadata]
@@ -504,13 +475,11 @@ module Hive
       metadata ||= (JSON[params[:json_metadata]] || nil) || {}
       params[:json_metadata] = metadata.to_json
       
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(fee creator new_account_name owner active posting memo_key json_metadata))
       
       params[:fee] = normalize_amount(options.merge amount: params[:fee])
       
-      ops = [[:account_create, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:account_create, params]]), &block)
     end
     
     # Create a claimed account.
@@ -556,7 +525,6 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_create_claimed_account
     def self.create_claimed_account(options, &block)
-      required_fields = %i(creator new_account_name owner active posting memo_key json_metadata)
       params = options[:params]
       
       if !!params[:metadata] && !!params[:json_metadata]
@@ -567,12 +535,10 @@ module Hive
       metadata ||= (JSON[params[:json_metadata]] || nil) || {}
       params[:json_metadata] = metadata.to_json
       
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(creator new_account_name owner active posting memo_key json_metadata))
       
       params[:extensions] ||= []
-      ops = [[:create_claimed_account, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:create_claimed_account, params]]), &block)
     end
     
     # Update an account.
@@ -615,7 +581,6 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_account_update
     def self.account_update(options, &block)
-      required_fields = %i(account)
       params = options[:params]
       
       if !!params[:metadata] && !!params[:json_metadata]
@@ -626,11 +591,9 @@ module Hive
       metadata ||= (JSON[params[:json_metadata]] || nil) || {}
       params[:json_metadata] = metadata.to_json
       
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(account))
       
-      ops = [[:account_update, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:account_update, params]]), &block)
     end
     
     # Users who wish to become a witness must pay a fee acceptable to the
@@ -664,17 +627,14 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_witness_update
     def self.witness_update(options, &block)
-      required_fields = %i(owner block_signing_key props fee)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(owner block_signing_key props fee))
       
       account_creation_fee = params[:props][:account_creation_fee] rescue nil
       params[:props][:account_creation_fee] = normalize_amount(options.merge amount: account_creation_fee)
       params[:fee] = normalize_amount(options.merge amount: params[:fee])
       
-      ops = [[:witness_update, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:witness_update, params]]), &block)
     end
     
     # Extensible replacement for #witness_update that supports additional
@@ -708,9 +668,8 @@ module Hive
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_witness_set_properties
     # @see https://github.com/openhive-network/hive/blob/master/doc/witness_parameters.md
     def self.witness_set_properties(options, &block)
-      required_fields = %i(owner props)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(owner props))
       
       props = params[:props]
       
@@ -741,9 +700,7 @@ module Hive
       params[:props] = props.sort_by{|k,v| k}
       
       params[:extensions] ||= []
-      ops = [[:witness_set_properties, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:witness_set_properties, params]]), &block)
     end
     
     # All accounts with a VFS (Vesting Fund Shares) can vote for or against any
@@ -758,13 +715,10 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_account_witness_vote
     def self.account_witness_vote(options, &block)
-      required_fields = %i(account witness approve)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(account witness approve))
       
-      ops = [[:account_witness_vote, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:account_witness_vote, params]]), &block)
     end
     
     # @param options [Hash] options
@@ -775,13 +729,10 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_account_witness_proxy
     def self.account_witness_proxy(options, &block)
-      required_fields = %i(account proxy)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(account proxy))
       
-      ops = [[:account_witness_proxy, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:account_witness_proxy, params]]), &block)
     end
     
     # Provides a generic way to add higher level protocols on top of witness
@@ -796,13 +747,10 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_custom
     def self.custom(options, &block)
-      required_fields = %i(required_auths id data)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(required_auths id data))
       
-      ops = [[:custom, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:custom, params]]), &block)
     end
     
     # The semmantics for this operation are the same as the {Broadcast#custom_json}
@@ -816,13 +764,10 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_custom_binary
     def self.custom_binary(options, &block)
-      required_fields = %i(id data)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(id data))
       
-      ops = [[:custom_binary, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:custom_binary, params]]), &block)
     end
     
     # Serves the same purpose as {Broadcast#custom} but also supports required
@@ -839,7 +784,6 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_custom_json
     def self.custom_json(options, &block)
-      required_fields = %i(id)
       params = options[:params]
       
       if !!params[:data] && !!params[:json]
@@ -850,13 +794,11 @@ module Hive
       data ||= (JSON[params[:json]] || nil) || {}
       params[:json] = data.to_json
       
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(id))
       
       params[:required_auths] ||= []
       params[:required_posting_auths] ||= []
-      ops = [[:custom_json, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:custom_json, params]]), &block)
     end
     
     # Allows an account to setup a vesting withdraw but with the additional
@@ -873,13 +815,10 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_set_withdraw_vesting_route
     def self.set_withdraw_vesting_route(options, &block)
-      required_fields = %i(from_account to_account percent auto_vest)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(from_account to_account percent auto_vest))
       
-      ops = [[:set_withdraw_vesting_route, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:set_withdraw_vesting_route, params]]), &block)
     end
     
     # All account recovery requests come from a listed recovery account.
@@ -894,14 +833,11 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_request_account_recovery
     def self.request_account_recovery(options, &block)
-      required_fields = %i(recovery_account account_to_recover new_owner_authority)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(recovery_account account_to_recover new_owner_authority))
       
       params[:extensions] ||= []
-      ops = [[:request_account_recovery, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:request_account_recovery, params]]), &block)
     end
     
     # @param options [Hash] options
@@ -914,14 +850,11 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_recover_account
     def self.recover_account(options, &block)
-      required_fields = %i(account_to_recover new_owner_authority recent_owner_authority)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(account_to_recover new_owner_authority recent_owner_authority))
       
       params[:extensions] ||= []
-      ops = [[:recover_account, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:recover_account, params]]), &block)
     end
     
     # Each account lists another account as their recovery account.
@@ -935,15 +868,12 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_change_recovery_account
     def self.change_recovery_account(options, &block)
-      required_fields = %i(account_to_recover)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(account_to_recover))
       
       params[:new_recovery_account] ||= ''
       params[:extensions] ||= []
-      ops = [[:change_recovery_account, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:change_recovery_account, params]]), &block)
     end
     
     # The purpose of this operation is to enable someone to send money
@@ -966,7 +896,6 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_escrow_transfer
     def self.escrow_transfer(options, &block)
-      required_fields = %i(from to agent escrow_id fee ratification_deadline)
       params = options[:params]
       
       if !!params[:meta] && !!params[:json_meta]
@@ -977,7 +906,7 @@ module Hive
       meta ||= (JSON[params[:json_meta]] || nil) || {}
       params[:json_meta] = meta.to_json
       
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(from to agent escrow_id fee ratification_deadline))
       
       params[:hbd_amount] = normalize_amount(options.merge amount: params[:hbd_amount])
       params[:hive_amount] = normalize_amount(options.merge amount: params[:hive_amount])
@@ -991,9 +920,7 @@ module Hive
         params[:escrow_expiration] = params[:escrow_expiration].strftime('%Y-%m-%dT%H:%M:%S')
       end
 
-      ops = [[:escrow_transfer, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:escrow_transfer, params]]), &block)
     end
     
     # If either the sender or receiver of an escrow payment has an issue, they
@@ -1010,13 +937,10 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_escrow_dispute
     def self.escrow_dispute(options, &block)
-      required_fields = %i(from to agent who escrow_id)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(from to agent who escrow_id))
       
-      ops = [[:escrow_dispute, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:escrow_dispute, params]]), &block)
     end
     
     # This operation can be used by anyone associated with the escrow transfer
@@ -1036,16 +960,13 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_escrow_release
     def self.escrow_release(options, &block)
-      required_fields = %i(from to agent who receiver escrow_id)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(from to agent who receiver escrow_id))
       
       params[:hbd_amount] = normalize_amount(options.merge amount: params[:hbd_amount])
       params[:hive_amount] = normalize_amount(options.merge amount: params[:hive_amount])
 
-      ops = [[:escrow_release, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:escrow_release, params]]), &block)
     end
     
     # The agent and to accounts must approve an escrow transaction for it to be
@@ -1063,13 +984,10 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_escrow_approve
     def self.escrow_approve(options, &block)
-      required_fields = %i(from to agent who escrow_id approve)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(from to agent who escrow_id approve))
       
-      ops = [[:escrow_approve, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:escrow_approve, params]]), &block)
     end
     
     # For time locked savings accounts.
@@ -1084,16 +1002,13 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_transfer_to_savings
     def self.transfer_to_savings(options, &block)
-      required_fields = %i(from to amount)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(from to amount))
       
       params[:memo] ||= ''
       params[:amount] = normalize_amount(options.merge amount: params[:amount])
 
-      ops = [[:transfer_to_savings, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:transfer_to_savings, params]]), &block)
     end
     
     # @param options [Hash] options
@@ -1107,16 +1022,13 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_transfer_from_savings
     def self.transfer_from_savings(options, &block)
-      required_fields = %i(from request_id to amount)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(from request_id to amount))
       
       params[:memo] ||= ''
       params[:amount] = normalize_amount(options.merge amount: params[:amount])
 
-      ops = [[:transfer_from_savings, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:transfer_from_savings, params]]), &block)
     end
     
     # @param options [Hash] options
@@ -1127,13 +1039,10 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_cancel_transfer_from_savings
     def self.cancel_transfer_from_savings(options, &block)
-      required_fields = %i(from request_id)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(from request_id))
       
-      ops = [[:cancel_transfer_from_savings, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:cancel_transfer_from_savings, params]]), &block)
     end
     
     # An account can chose to decline their voting rights after a 30 day delay.
@@ -1150,13 +1059,10 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_decline_voting_rights
     def self.decline_voting_rights(options, &block)
-      required_fields = %i(account decline)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(account decline))
       
-      ops = [[:decline_voting_rights, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:decline_voting_rights, params]]), &block)
     end
     
     # Delegate vesting shares from one account to the other.
@@ -1170,14 +1076,11 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_delegate_vesting_shares
     def self.delegate_vesting_shares(options, &block)
-      required_fields = %i(delegator delegatee vesting_shares)
       params = options[:params]
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(delegator delegatee vesting_shares))
       
       params[:vesting_shares] = normalize_amount(options.merge amount: params[:vesting_shares])
-      ops = [[:delegate_vesting_shares, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:delegate_vesting_shares, params]]), &block)
     end
     
     # @param options [Hash] options
@@ -1197,7 +1100,6 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_account_create_with_delegation
     def self.account_create_with_delegation(options, &block)
-      required_fields = %i(fee delegation creator new_account_name owner active posting memo_key)
       params = options[:params]
       
       if !!params[:metadata] && !!params[:json_metadata]
@@ -1208,15 +1110,13 @@ module Hive
       metadata ||= (JSON[params[:json_metadata]] || nil) || {}
       params[:json_metadata] = metadata.to_json
       
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(fee delegation creator new_account_name owner active posting memo_key))
       
       params[:fee] = normalize_amount(options.merge amount: params[:fee])
       params[:delegation] = normalize_amount(options.merge amount: params[:delegation])
       params[:extensions] ||= []
       
-      ops = [[:account_create_with_delegation, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:account_create_with_delegation, params]]), &block)
     end
     
     # @param options [Hash] options
@@ -1228,17 +1128,14 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_claim_account
     def self.claim_account(options, &block)
-      required_fields = %i(creator fee)
       params = options[:params]
       
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(creator fee))
       
       params[:fee] = normalize_amount(options.merge amount: params[:fee])
       params[:extensions] ||= []
       
-      ops = [[:claim_account, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:claim_account, params]]), &block)
     end
     
     # @param options [Hash] options
@@ -1251,18 +1148,15 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_claim_reward_balance
     def self.claim_reward_balance(options, &block)
-      required_fields = %i(account)
       params = options[:params]
       
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(account))
       
       params[:reward_hive] = normalize_amount(options.merge amount: params[:reward_hive])
       params[:reward_hbd] = normalize_amount(options.merge amount: params[:reward_hbd])
       params[:reward_vests] = normalize_amount(options.merge amount: params[:reward_vests])
       
-      ops = [[:claim_reward_balance, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:claim_reward_balance, params]]), &block)
     end
     
     # @param options [Hash] options
@@ -1274,10 +1168,9 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_account_update2
     def self.account_update2(options, &block)
-      required_fields = %i(account)
       params = options[:params]
       
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(account))
       
       if !!params[:metadata] && !!params[:json_metadata]
         raise Hive::ArgumentError, 'Assign either metadata or json_metadata, not both.'
@@ -1287,9 +1180,7 @@ module Hive
       metadata ||= (JSON[params[:json_metadata]] || nil) || {}
       params[:json_metadata] = metadata.to_json
       
-      ops = [[:account_update2, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:account_update2, params]]), &block)
     end
     
     # @param options [Hash] options
@@ -1305,10 +1196,9 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_create_proposal
     def self.create_proposal(options, &block)
-      required_fields = %i(creator start_date end_date daily_pay subject permlink)
       params = options[:params]
       
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(creator start_date end_date daily_pay subject permlink))
       
       params[:start_date] = Time.parse(params[:start_date].to_s)
       params[:start_date] = params[:start_date].strftime('%Y-%m-%dT%H:%M:%S')
@@ -1316,9 +1206,7 @@ module Hive
       params[:end_date] = params[:end_date].strftime('%Y-%m-%dT%H:%M:%S')
       params[:daily_pay] = normalize_amount(options.merge amount: params[:daily_pay])
       
-      ops = [[:create_proposal, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:create_proposal, params]]), &block)
     end
     
     # @param options [Hash] options
@@ -1330,14 +1218,11 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_update_proposal_votes
     def self.update_proposal_votes(options, &block)
-      required_fields = %i(voter proposal_ids approve)
       params = options[:params]
       
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(voter proposal_ids approve))
       
-      ops = [[:update_proposal_votes, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:update_proposal_votes, params]]), &block)
     end
     
     # @param options [Hash] options
@@ -1348,14 +1233,11 @@ module Hive
     # @option options [Boolean] :pretend Just validate, do not broadcast.
     # @see https://developers.hive.io/apidefinitions/broadcast-ops.html#broadcast_ops_update_proposal_votes
     def self.remove_proposal(options, &block)
-      required_fields = %i(proposal_owner proposal_ids)
       params = options[:params]
       
-      check_required_fields(params, *required_fields)
+      check_required_fields(params, *%i(proposal_owner proposal_ids))
       
-      ops = [[:remove_proposal, params]]
-      
-      process(options.merge(ops: ops), &block)
+      process(options.merge(ops: [[:remove_proposal, params]]), &block)
     end
     
     # @param options [Hash] options

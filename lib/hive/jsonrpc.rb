@@ -61,17 +61,13 @@ module Hive
     
     def get_all_signatures(&block)
       request_object = []
-      method_names = []
       method_map = {}
       signatures = {}
-      offset = 0
       
       get_api_methods do |api, methods|
         request_object += methods.map do |method|
           method_name = "#{api}.#{method}"
-          method_names << method_name
           current_rpc_id = @rpc_client.rpc_id
-          offset += 1
           method_map[current_rpc_id] = [api, method]
           
           {

@@ -2,6 +2,8 @@ require 'test_helper'
 
 module Hive
   class ApiTest < Hive::Test
+    include ApiContractTests
+
     METHOD_NAMES_1_ARG = %i(get_block get_block_header
       get_conversion_requests
       get_key_references get_open_orders
@@ -100,18 +102,6 @@ module Hive
       end
     end
     
-    def test_method_missing
-      assert_raises NoMethodError do
-        @api.bogus
-      end
-    end
-
-    def test_all_respond_to
-      @methods.each do |key|
-        assert @api.respond_to?(key), "expect rpc respond to #{key}"
-      end
-    end
-
     def test_all_methods
       vcr_cassette("#{@api.class.api_name}_all_methods") do
         @methods.each do |key|

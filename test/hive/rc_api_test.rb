@@ -2,6 +2,8 @@ require 'test_helper'
 
 module Hive
   class RcApiTest < Hive::Test
+    include ApiContractTests
+
     def setup
       @api = Hive::RcApi.new(url: TEST_NODE) rescue skip('rc_api not supported')
       @jsonrpc = Jsonrpc.new(url: TEST_NODE)
@@ -16,12 +18,6 @@ module Hive
     
     def test_inspect
       assert_match(/^#<RcApi \[@chain=hive, @methods=<\d+ elements>\]>$/, @api.inspect)
-    end
-    
-    def test_method_missing
-      assert_raises NoMethodError do
-        @api.bogus
-      end
     end
     
     def test_all_respond_to

@@ -2,6 +2,8 @@ require 'test_helper'
 
 module Hive
   class DatabaseApiTest < Hive::Test
+    include ApiContractTests
+
     include Utils
     
     def setup
@@ -17,18 +19,6 @@ module Hive
     
     def test_inspect
       assert_equal "#<DatabaseApi [@chain=hive, @methods=<55 elements>]>", @api.inspect
-    end
-    
-    def test_method_missing
-      assert_raises NoMethodError do
-        @api.bogus
-      end
-    end
-    
-    def test_all_respond_to
-      @methods.each do |key|
-        assert @api.respond_to?(key), "expect rpc respond to #{key}"
-      end
     end
     
     def test_find_account_recovery_requests

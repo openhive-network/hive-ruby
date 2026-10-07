@@ -1,4 +1,3 @@
-require 'bindata'
 require 'base58'
 require 'digest/rmd160'
 
@@ -47,15 +46,15 @@ module Hive
       Operation::IDS[unsigned_char]
     end
     
-    def unsigned_char; BinData::Uint8le.read(scan(1)); end # 8-bit unsigned 
-    def uint16; BinData::Uint16le.read(scan(2)); end # 16-bit unsigned, VAX (little-endian) byte order
-    def uint32; BinData::Uint32le.read(scan(4)); end # 32-bit unsigned, VAX (little-endian) byte order
-    def uint64; BinData::Uint64le.read(scan(8)); end # 64-bit unsigned, little-endian
+    def unsigned_char; read_integer(1, 'C'); end # 8-bit unsigned
+    def uint16; read_integer(2, 'v'); end # 16-bit unsigned, little-endian
+    def uint32; read_integer(4, 'V'); end # 32-bit unsigned, little-endian
+    def uint64; read_integer(8, 'Q<'); end # 64-bit unsigned, little-endian
 
-    def signed_char; BinData::Int8le.read(scan(1)); end # 8-bit signed 
-    def int16; BinData::Int16le.read(scan(2)); end # 16-bit signed, little-endian
-    def int32; BinData::Int32le.read(scan(4)); end # 32-bit signed, little-endian
-    def int64; BinData::Int64le.read(scan(8)); end # 64-bit signed, little-endian
+    def signed_char; read_integer(1, 'c'); end # 8-bit signed
+    def int16; read_integer(2, 's<'); end # 16-bit signed, little-endian
+    def int32; read_integer(4, 'l<'); end # 32-bit signed, little-endian
+    def int64; read_integer(8, 'q<'); end # 64-bit signed, little-endian
 
     def boolean; scan(1) == "\x01"; end
     
@@ -230,6 +229,14 @@ module Hive
       operations
     rescue => e
       raise DeserializationError.new("Operations failed", e)
+    end
+  private
+    def read_integer(length, format)
+      data = scan(length)
+      raise EOFError, 'End of file reached' if data.empty?
+      raise IOError, 'data truncated' if data.bytesize < length
+
+      data.unpack(format).first
     end
   end
 end

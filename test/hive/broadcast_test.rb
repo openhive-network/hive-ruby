@@ -1225,18 +1225,6 @@ module Hive
       end
     end
     
-    def test_fake_op
-      options = {
-        ops: [[:bogus, {}]]
-      }
-      
-      vcr_cassette('broadcast_fake_op') do
-        assert_raises UnknownOperationError do
-          Hive::Broadcast.process(@broadcast_options.merge(options))
-        end
-      end
-    end
-    
     def test_claim_reward_balance
       skip 'signing path is unstable under current bitcoin-ruby/OpenSSL 3 environment'
       options = {

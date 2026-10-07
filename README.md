@@ -88,7 +88,9 @@ JSON also prefers native support when available, including extensions bundled wi
 
 The fallback is pinned to `json_pure` 2.7.6: later releases are shims that require native JSON. It retains that version's JSON behavior, so float formatting and some malformed-input handling differ from newer native releases. The normal RPC payloads are covered by the same tests for both backends.
 
-The runtime gem dependencies require no extension builds. Ruby's own standard-library extensions are still required: HTTPS uses OpenSSL, SHA-256 and RIPEMD-160 use Digest, and the pure JSON parser uses StringScanner. RIPEMD-160 does not depend on OpenSSL's enabled providers. Base58 and binary parsing already use pure Ruby packages.
+The runtime gem dependencies require no extension builds. Ruby's own standard-library extensions are still required: HTTPS uses OpenSSL, SHA-256 and RIPEMD-160 use Digest, and the pure JSON parser uses StringScanner. RIPEMD-160 does not depend on OpenSSL's enabled providers. Base58 uses a pure Ruby package; integer decoding uses Ruby's built-in unpacking.
+
+`Hive::Marshal` fixed-width integer readers return Ruby `Integer` values.
 
 To verify the fallback without native backends or development dependencies (offline RPC fixture; no broadcasts):
 

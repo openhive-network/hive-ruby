@@ -20,6 +20,8 @@ module Hive
       assert_equal({amount: '0', precision: 3, nai: '@@000000013'}, Hive::Type::Amount.to_h('0.000 HBD'))
       assert_equal({amount: '0', precision: 3, nai: '@@000000021'}, Hive::Type::Amount.to_h('0.000 HIVE'))
       assert_equal({amount: '0', precision: 6, nai: '@@000000037'}, Hive::Type::Amount.to_h('0.000000 VESTS'))
+      assert_nil Hive::Type::Amount.to_h('0.000 TESTS')
+      assert_nil Hive::Type::Amount.to_h('0.000 TBD')
       
       assert_raises TypeError do
         Hive::Type::Amount.to_h('0.000 BOGUS')

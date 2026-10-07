@@ -3,6 +3,8 @@ require 'test_helper'
 module Hive
   # :nocov:
   class AccountHistoryApiTest < Hive::Test
+    include ApiContractTests
+
     def setup
       @api = Hive::AccountHistoryApi.new(url: TEST_NODE) rescue skip('AccountHistoryApi is disabled.')
       @jsonrpc = Jsonrpc.new(url: TEST_NODE)
@@ -17,18 +19,6 @@ module Hive
     
     def test_inspect
       assert_equal "#<AccountHistoryApi [@chain=hive, @methods=<4 elements>]>", @api.inspect
-    end
-    
-    def test_method_missing
-      assert_raises NoMethodError do
-        @api.bogus
-      end
-    end
-    
-    def test_all_respond_to
-      @methods.each do |key|
-        assert @api.respond_to?(key), "expect rpc respond to #{key}"
-      end
     end
     
     def test_get_account_history

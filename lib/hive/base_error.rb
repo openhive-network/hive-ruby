@@ -14,172 +14,93 @@ module Hive
     end
     
     def self.build_error(error, context)
-      if error.message == 'Unable to acquire database lock'
+      case
+      when error.message == 'Unable to acquire database lock'
         raise Hive::RemoteDatabaseLockError, error.message, build_backtrace(error)
-      end
-      
-      if error.message.include? 'Internal Error'
+      when error.message.include?('Internal Error')
         raise Hive::RemoteInternalError, error.message, build_backtrace(error)
-      end
-      
-      if error.message.include? 'Server error'
+      when error.message.include?('Server error')
         raise Hive::RemoteServerError, error.message, build_backtrace(error)
-      end
-      
-      if error.message.include?('plugin not enabled') || error.message.include?('Could not find API')
+      when error.message.include?('plugin not enabled') || error.message.include?('Could not find API')
         raise Hive::PluginNotEnabledError, error.message, build_backtrace(error)
-      end
-      
-      if error.message.include? 'Supported by hivemind'
+      when error.message.include?('Supported by hivemind')
         raise Hive::MethodNotEnabledError, error.message, build_backtrace(error)
-      end
-      
-      if error.message.include? 'argument'
+      when error.message.include?('argument')
         raise Hive::ArgumentError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Invalid params'
+      when error.message.include?('Invalid params')
         raise Hive::ArgumentError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.start_with? 'Bad Cast:'
+      when error.message.start_with?('Bad Cast:')
         raise Hive::ArgumentError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'prefix_len'
+      when error.message.include?('prefix_len')
         raise Hive::ArgumentError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Parse Error'
+      when error.message.include?('Parse Error')
         raise Hive::ArgumentError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'unknown key'
+      when error.message.include?('unknown key')
         raise Hive::ArgumentError, "#{context}: #{error.message} (or content has been deleted)", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Comment is not in account\'s comments'
+      when error.message.include?('Comment is not in account\'s comments')
         raise Hive::ArgumentError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Could not find comment'
+      when error.message.include?('Could not find comment')
         raise Hive::ArgumentError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'unable to convert ISO-formatted string to fc::time_point_sec'
+      when error.message.include?('unable to convert ISO-formatted string to fc::time_point_sec')
         raise Hive::ArgumentError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Input data have to treated as object.'
+      when error.message.include?('Input data have to treated as object.')
         raise Hive::ArgumentError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'base.amount > share_type(0)'
+      when error.message.include?('base.amount > share_type(0)')
         raise Hive::ArgumentError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Invalid parameter'
+      when error.message.include?('Invalid parameter')
         raise Hive::ArgumentError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'blk->transactions.size() > itr->trx_in_block'
+      when error.message.include?('blk->transactions.size() > itr->trx_in_block')
         raise Hive::VirtualOperationsNotAllowedError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'A transaction must have at least one operation'
+      when error.message.include?('A transaction must have at least one operation')
         raise Hive::EmptyTransactionError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'transaction expiration exception'
+      when error.message.include?('transaction expiration exception')
         raise Hive::TransactionExpiredError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Duplicate transaction check failed'
+      when error.message.include?('Duplicate transaction check failed')
         raise Hive::DuplicateTransactionError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'signature is not canonical'
+      when error.message.include?('signature is not canonical')
         raise Hive::NonCanonicalSignatureError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'attempting to push a block that is too old'
+      when error.message.include?('attempting to push a block that is too old')
         raise Hive::BlockTooOldError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'irrelevant signature'
+      when error.message.include?('irrelevant signature')
         raise Hive::IrrelevantSignatureError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'missing required posting authority'
+      when error.message.include?('missing required posting authority')
         raise Hive::MissingPostingAuthorityError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'missing required active authority'
+      when error.message.include?('missing required active authority')
         raise Hive::MissingActiveAuthorityError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'missing required owner authority'
+      when error.message.include?('missing required owner authority')
         raise Hive::MissingOwnerAuthorityError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'missing required other authority'
+      when error.message.include?('missing required other authority')
         raise Hive::MissingOtherAuthorityError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Upstream response error'
+      when error.message.include?('Upstream response error')
         raise Hive::UpstreamResponseError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Request Timeout'
+      when error.message.include?('Request Timeout')
         raise Hive::RequestTimeoutUpstreamResponseError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Bad or missing upstream response'
+      when error.message.include?('Bad or missing upstream response')
         raise Hive::BadOrMissingUpstreamResponseError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'operator has disabled operation indexing by transaction_id'
+      when error.message.include?('operator has disabled operation indexing by transaction_id')
         raise Hive::TransactionIndexDisabledError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include?('Assert Exception:false: Account name ') && error.message.include?(' is not valid. Please follow the RFC 1035 rules.')
+      when error.message.include?('Assert Exception:false: Account name ') && error.message.include?(' is not valid. Please follow the RFC 1035 rules.')
         raise Hive::InvalidAccountError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include?('Method') && error.message.include?(' does not exist.')
+      when error.message.include?('Method') && error.message.include?(' does not exist.')
         raise Hive::UnknownMethodError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Invalid operation name'
+      when error.message.include?('Invalid operation name')
         raise Hive::UnknownOperationError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message =~ /Invalid object name: .+_operation/
+      when error.message =~ /Invalid object name: .+_operation/
         raise Hive::UnknownOperationError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Author not found'
+      when error.message.include?('Author not found')
         raise Hive::AuthorNotFoundError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? ' != fc::time_point_sec::maximum()'
+      when error.message.include?(' != fc::time_point_sec::maximum()')
         raise Hive::ReachedMaximumTimeError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Cannot transfer a negative amount (aka: stealing)'
+      when error.message.include?('Cannot transfer a negative amount (aka: stealing)')
         raise Hive::TheftError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'Must transfer a nonzero amount'
+      when error.message.include?('Must transfer a nonzero amount')
         raise Hive::NonZeroRequiredError, "#{context}: #{error.message}", build_backtrace(error)
-      end
-      
-      if error.message.include? 'is_asset_type'
+      when error.message.include?('is_asset_type')
         raise Hive::UnexpectedAssetError, "#{context}: #{error.message}", build_backtrace(error)
+      else
+        puts JSON.pretty_generate(error) if ENV['DEBUG']
+        raise UnknownError, "#{context}: #{error.message}", build_backtrace(error)
       end
-      
-      puts JSON.pretty_generate(error) if ENV['DEBUG']
-      raise UnknownError, "#{context}: #{error.message}", build_backtrace(error)
     end
   private
     def self.build_backtrace(error)

@@ -2,6 +2,8 @@ require 'test_helper'
 
 module Hive
   class AccountByKeyApiTest < Hive::Test
+    include ApiContractTests
+
     def setup
       @api = Hive::AccountByKeyApi.new(url: TEST_NODE) rescue skip('account_by_key_api not supported')
       @jsonrpc = Jsonrpc.new(url: TEST_NODE)
@@ -16,18 +18,6 @@ module Hive
     
     def test_inspect
       assert_equal "#<AccountByKeyApi [@chain=hive, @methods=<1 element>]>", @api.inspect
-    end
-    
-    def test_method_missing
-      assert_raises NoMethodError do
-        @api.bogus
-      end
-    end
-    
-    def test_all_respond_to
-      @methods.each do |key|
-        assert @api.respond_to?(key), "expect rpc respond to #{key}"
-      end
     end
     
     def test_get_key_references

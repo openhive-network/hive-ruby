@@ -2,6 +2,8 @@ require 'test_helper'
 
 module Hive
   class TagsApiTest < Hive::Test
+    include ApiContractTests
+
     def setup
       @api = Hive::TagsApi.new(url: TEST_NODE) rescue skip('tags_api not supported')
       @jsonrpc = Jsonrpc.new(url: TEST_NODE)
@@ -15,18 +17,6 @@ module Hive
     
     def test_inspect
       assert_equal "#<TagsApi [@chain=hive, @methods=<20 elements>]>", @api.inspect
-    end
-    
-    def test_method_missing
-      assert_raises NoMethodError do
-        @api.bogus
-      end
-    end
-    
-    def test_all_respond_to
-      @methods.each do |key|
-        assert @api.respond_to?(key), "expect rpc respond to #{key}"
-      end
     end
     
     def test_get_active_votes
