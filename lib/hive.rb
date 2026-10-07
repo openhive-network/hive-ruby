@@ -1,5 +1,5 @@
 # encoding: UTF-8
-require 'json' unless defined?(JSON)
+require 'hive/json'
 require 'net/https'
 
 require 'hashie'

@@ -120,8 +120,23 @@ module Hive
 
       assert_equal 1, trx.signatures.size
       assert_equal 65, signature.bytesize
-      refute builder.send(:canonical?, signature), 'fixture should prove rbsecp256k1 signer does not use the legacy canonical-grinding loop'
+      assert_operator signature.byteslice(33, 32).unpack1('H*').to_i(16), :<=, CompactSigner::ORDER / 2
+      if CompactSigner.default.is_a?(CompactSigner::Rbsecp256k1)
+        refute builder.send(:canonical?, signature), 'fixture should prove rbsecp256k1 signer does not use the legacy canonical-grinding loop'
+      end
       assert_equal public_key_hex, CompactSigner.default.recover_compact(digest, signature)
+    end
+
+    def test_sign_with_pure_ruby_fallback
+      previous = CompactSigner.instance_variable_get(:@default)
+      CompactSigner.instance_variable_set(:@default, nil)
+      CompactSigner::Rbsecp256k1.stub(:new, -> { raise LoadError, 'native signer unavailable' }) do
+        test_sign_with_default_rbsecp256k1_signer
+        @wif = 'L1qLfs5M5yBoRjAR25Sx4GxmnrAvGua5mS22LBrJFsL6zknQrNjs'
+        test_sign_with_default_rbsecp256k1_signer
+      end
+    ensure
+      CompactSigner.instance_variable_set(:@default, previous)
     end
 
     def test_sign_reports_missing_optional_legacy_dependency

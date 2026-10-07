@@ -51,9 +51,9 @@ gem 'hive-ruby', require: 'hive'
 
 ## Signing backend notes
 
-`hive-ruby` signs transactions with a `libsecp256k1` backend through `rbsecp256k1`.  This avoids Ruby/OpenSSL EC mutation behavior that can break older `bitcoin-ruby` signing paths on Ruby/OpenSSL 3 platforms.
+`hive-ruby` prefers `libsecp256k1` through `rbsecp256k1` for signing and public-key recovery. If the extension cannot load or lacks recovery support, it automatically uses the included pure Ruby `ecdsa` dependency. Invalid keys, invalid signatures, and signing errors are reported; they do not switch backends.
 
-RPC queries and streaming do not require a signing gem.  Applications that sign transactions or derive public keys must explicitly add the default signer to their Gemfile, including when upgrading from a version that installed it automatically:
+For native acceleration, add the optional signer to your application's Gemfile:
 
 ```ruby
 gem 'rbsecp256k1', '~> 6.0'
@@ -66,7 +66,7 @@ bundle install
 bundle exec ruby -rrbsecp256k1 -e 'puts Secp256k1.have_recovery?'
 ```
 
-The command should print `true`.  If the `rbsecp256k1` native extension cannot build, make sure normal native Ruby build tools are available.  On macOS, the bundled `libsecp256k1` build may need Automake/Autoconf tooling, e.g.:
+The command should print `true`. If the extension cannot build, remove the optional `rbsecp256k1` Gemfile entry and run `bundle install` to use the Ruby fallback. Bundler cannot ignore a failed build of an explicitly requested gem. To enable native signing on macOS, the bundled `libsecp256k1` build may need Automake/Autoconf tooling, e.g.:
 
 ```bash
 brew install automake autoconf
@@ -75,11 +75,27 @@ bundle pristine rbsecp256k1
 
 For downstream projects comparing deployment strategies:
 
-* **Default path:** install `rbsecp256k1` as described above.  This is the expected signer for modern Ruby/OpenSSL environments.
+* **Native path:** install `rbsecp256k1` as described above for speed and libsecp256k1's side-channel protections.
+* **Pure Ruby fallback:** no extra setup is required. It generates fresh nonces with `SecureRandom`, produces low-S compact signatures, and supports compressed and uncompressed keys. The Ruby implementation is slower and does not provide constant-time execution.
 * **Legacy fallback:** add `gem 'bitcoin-ruby', '0.0.20'` to your application's Gemfile, run `bundle install`, and set `HIVE_USE_LEGACY_BITCOIN_RUBY_SIGNER=1` to try the old signer path.  This is mainly useful for comparison or troubleshooting and may still fail on OpenSSL 3.
 * **Fork strategy:** if a downstream project carries a patched `bitcoin-ruby` fork, test it behind the legacy fallback first.  If it proves reliable, compare its output against the default `rbsecp256k1` path before relying on it in production.
 
-`bitcoin-ruby` and its transitive dependencies are no longer required for normal use.  WIF decoding uses the existing pure Ruby `base58` gem and Ruby's SHA-256 digest support.  The default signer still requires the native `rbsecp256k1` extension; `bitcoin-ruby` is loaded only when legacy signing is explicitly selected.
+`bitcoin-ruby` is loaded only when legacy signing is explicitly selected. WIF decoding uses the pure Ruby `base58` gem and Ruby's SHA-256 digest support. You can inspect the selected signer with `Hive::CompactSigner.default.class`.
+
+### JSON and runtime requirements
+
+JSON also prefers native support when available, including extensions bundled with Ruby. Add `gem 'json', '~> 2.1'` to your application's Gemfile to use a current native gem. When native JSON cannot load, `json_pure` supplies parsing and generation. Inspect the selected parser with `JSON.parser`.
+
+The fallback is pinned to `json_pure` 2.7.6: later releases are shims that require native JSON. It retains that version's JSON behavior, so float formatting and some malformed-input handling differ from newer native releases. The normal RPC payloads are covered by the same tests for both backends.
+
+The runtime gem dependencies require no extension builds. Ruby's own standard-library extensions are still required: HTTPS uses OpenSSL, SHA-256 and RIPEMD-160 use Digest, and the pure JSON parser uses StringScanner. RIPEMD-160 does not depend on OpenSSL's enabled providers. Base58 and binary parsing already use pure Ruby packages.
+
+To verify the fallback without native backends or development dependencies (offline RPC fixture; no broadcasts):
+
+```bash
+BUNDLE_GEMFILE=test/pure_ruby/Gemfile bundle install
+BUNDLE_GEMFILE=test/pure_ruby/Gemfile bundle exec ruby test/pure_ruby/smoke.rb
+```
 
 ## Examples
 

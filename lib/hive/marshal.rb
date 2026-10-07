@@ -1,5 +1,6 @@
 require 'bindata'
 require 'base58'
+require 'digest/rmd160'
 
 module Hive
   class Marshal
@@ -92,7 +93,7 @@ module Hive
     
     def public_key(prefix = @prefix)
       raw_public_key = raw_bytes(33)
-      checksum = OpenSSL::Digest::RIPEMD160.digest(raw_public_key)
+      checksum = Digest::RMD160.digest(raw_public_key)
       key = Base58.binary_to_base58(raw_public_key + checksum.slice(0, 4), :bitcoin)
       
       prefix + key unless key == PUBLIC_KEY_DISABLED
